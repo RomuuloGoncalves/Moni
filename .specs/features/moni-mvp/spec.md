@@ -312,18 +312,18 @@ Romulo precisa de uma forma simples de registrar e categorizar entradas e saída
 | CAT-01 | P1: Categorização | Tasks (T17-T21) | Implementing |
 | DASH-01 | P1: Dashboard Simplificado | Tasks (T29-T31) | Implementing |
 | BUD-01 | P2: Orçamentos/Metas | Tasks (T32-T36) | Implementing |
-| IMP-01 | P2: Importação de Extrato | Design | Pending |
-| ACC-03 | P2: Conta de Investimento | Tasks (T37) | Pending |
-| IMP-02 | P2: Roteamento Cofrinho/Investimento | Tasks (T44) | Pending |
-| CAT-02 | P2: Aprendizado de Categorização por Comerciante | Tasks (T41-T44, T47) | Pending |
-| TXN-04 | P2: Filtro de Mês/Data em Transações | Tasks (T48) | Pending |
-| UX-01 | P1: Responsividade Mobile | Tasks (T49) | Pending |
+| IMP-01 | P2: Importação de Extrato | Tasks (T38-T46) | Implementing |
+| ACC-03 | P2: Conta de Investimento | Tasks (T37) | Implementing |
+| IMP-02 | P2: Roteamento Cofrinho/Investimento | Tasks (T44) | Implementing |
+| CAT-02 | P2: Aprendizado de Categorização por Comerciante | Tasks (T41-T44, T47-T49) | Implementing |
+| TXN-04 | P2: Filtro de Mês/Data em Transações | Tasks (T50) | Implementing |
+| UX-01 | P1: Responsividade Mobile | Tasks (T51) | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]` (AUTH, ACC, TXN, CAT, DASH, BUD, IMP, UX)
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 16 total, 13 mapped to tasks (AUTH-01, AUTH-02 — Phase 1+2 through T11; ACC-01, ACC-02 — Phase 3 through T16; TXN-01 — Phase 5 through T28; CAT-01 — Phase 4 through T21; DASH-01 — Phase 6 through T31; BUD-01 — Phase 7 through T36; ACC-03 — Phase 8 through T37; IMP-02 — Phase 8 through T44; CAT-02 — Phase 8 through T41-T44/T47; TXN-04 — Phase 9 through T48; UX-01 — Phase 9 through T49), 3 unmapped (TXN-02, TXN-03 — not yet split out from TXN-01's implementation; IMP-01 — Phase 8 not yet executed)
+**Coverage:** 16 total, 14 mapped to tasks (AUTH-01, AUTH-02 — Phase 1+2 through T11; ACC-01, ACC-02 — Phase 3 through T16; TXN-01 — Phase 5 through T28; CAT-01 — Phase 4 through T21; DASH-01 — Phase 6 through T31; BUD-01 — Phase 7 through T36; ACC-03 — Phase 8 through T37; IMP-01 — Phase 8 through T38-T46; IMP-02 — Phase 8 through T44; CAT-02 — Phase 8 through T41-T44/T47-T49; TXN-04 — Phase 9 through T50; UX-01 — Phase 9 through T51), 2 unmapped (TXN-02, TXN-03 — not yet split out from TXN-01's implementation)
 
 ---
 

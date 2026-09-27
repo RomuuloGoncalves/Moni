@@ -857,8 +857,8 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: `frontend-design`
 
 **Done when**:
-- [ ] ACC-03 AC1 (INVESTMENT accepted as a valid type on create/edit) covered
-- [ ] ACC-03 AC2 (warning badge shown for INVESTMENT accounts) covered
+- [x] ACC-03 AC1 (INVESTMENT accepted as a valid type on create/edit) covered
+- [x] ACC-03 AC2 (warning badge shown for INVESTMENT accounts) covered
 
 **Tests**: none
 **Gate**: build
@@ -876,7 +876,7 @@ T49 → T51
 **Tools**: MCP: `context7`, `WebSearch` (if the library isn't resolvable via Context7) / Skill: NONE
 
 **Done when**:
-- [ ] A specific library + version is chosen and installed, with the rationale recorded (or, if no suitable library is found, an explicit fallback of hand-rolled minimal OFX SGML parsing is documented as the decision)
+- [x] A specific library + version is chosen and installed, with the rationale recorded (or, if no suitable library is found, an explicit fallback of hand-rolled minimal OFX SGML parsing is documented as the decision)
 
 **Tests**: none
 **Gate**: build
@@ -894,8 +894,8 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] IMP-01 AC1 (extracts date/value/description, classifies sign) covered
-- [ ] IMP-01 AC4 (malformed file → error, nothing partially parsed) covered
+- [x] IMP-01 AC1 (extracts date/value/description, classifies sign) covered
+- [x] IMP-01 AC4 (malformed file → error, nothing partially parsed) covered
 
 **Tests**: unit
 **Gate**: quick
@@ -913,10 +913,10 @@ T49 → T51
 **Tools**: MCP: `context7` (confirm a current CSV-parsing library choice, e.g. `papaparse`, before use) / Skill: NONE
 
 **Done when**:
-- [ ] IMP-01 AC2 (column mapping applied correctly, generic case) covered
-- [ ] IMP-01 AC4 (malformed file → error) covered
-- [ ] IMP-01 AC8 (Brazilian currency format: thousand separator + decimal comma, and Unicode minus sign U+2212 vs ASCII hyphen, correctly normalized to cents with correct sign) covered, using `test-fixtures/csv-imports/picpay-sample.csv` as a real-world fixture (referenced by path; do not paste its contents into specs, tests, or commit messages — it is gitignored real personal financial data)
-- [ ] Optional/empty field (e.g. `forma de pagamento` blank on some rows) does not break parsing, covered using the same fixture
+- [x] IMP-01 AC2 (column mapping applied correctly, generic case) covered
+- [x] IMP-01 AC4 (malformed file → error) covered
+- [x] IMP-01 AC8 (Brazilian currency format: thousand separator + decimal comma, and Unicode minus sign U+2212 vs ASCII hyphen, correctly normalized to cents with correct sign) covered, using `test-fixtures/csv-imports/picpay-sample.csv` as a real-world fixture (referenced by path; do not paste its contents into specs, tests, or commit messages — it is gitignored real personal financial data)
+- [x] Optional/empty field (e.g. `forma de pagamento` blank on some rows) does not break parsing, covered using the same fixture
 
 **Tests**: unit
 **Gate**: quick
@@ -934,7 +934,7 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Schema matches design.md; unique compound index on `(userId, merchantKey)` declared
+- [x] Schema matches design.md; unique compound index on `(userId, merchantKey)` declared
 
 **Tests**: none
 **Gate**: build
@@ -952,9 +952,9 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Upsert/find/list paths covered against in-memory Mongo, scoped by `userId`
-- [ ] `listUncategorizedMerchants` correctly excludes merchants that already have a rule
-- [ ] `bulkSetCategoryForMerchant` only updates transactions of the given `userId` (a different user's matching transactions are untouched)
+- [x] Upsert/find/list paths covered against in-memory Mongo, scoped by `userId`
+- [x] `listUncategorizedMerchants` correctly excludes merchants that already have a rule
+- [x] `bulkSetCategoryForMerchant` only updates transactions of the given `userId` (a different user's matching transactions are untouched)
 
 **Tests**: integration
 **Gate**: full
@@ -972,12 +972,12 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] CAT-02 AC1 (upsert on manual categorization) covered
-- [ ] CAT-02 AC2/AC3 (suggest/auto-apply from known rule) covered
-- [ ] CAT-02 AC4 (no rule → null, no guessing) covered
-- [ ] CAT-02 AC7 (categorizing an uncategorized merchant retroactively updates existing uncategorized transactions) covered
-- [ ] CAT-02 AC9 (editing an existing rule reapplies to existing transactions, including ones with the old category) covered
-- [ ] CAT-02 AC10 (isolation by userId on bulk update) covered
+- [x] CAT-02 AC1 (upsert on manual categorization) covered
+- [x] CAT-02 AC2/AC3 (suggest/auto-apply from known rule) covered
+- [x] CAT-02 AC4 (no rule → null, no guessing) covered
+- [x] CAT-02 AC7 (categorizing an uncategorized merchant retroactively updates existing uncategorized transactions) covered
+- [x] CAT-02 AC9 (editing an existing rule reapplies to existing transactions, including ones with the old category) covered
+- [x] CAT-02 AC10 (isolation by userId on bulk update) covered
 
 **Tests**: unit
 **Gate**: quick
@@ -995,13 +995,13 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] IMP-01 AC3 (duplicates skipped, count reported) covered
-- [ ] IMP-01 AC5 (balance updated once with net effect, including TRANSFER target accounts) covered
-- [ ] IMP-02 AC1/AC2 (cofrinho guardado/resgatado → TRANSFER to/from auto-created SAVINGS account) covered
-- [ ] IMP-02 AC3 (idempotent reuse of an existing account by normalized name) covered
-- [ ] IMP-02 AC4 (Pix to RICO/XP → TRANSFER to "Investimentos" INVESTMENT account) covered
-- [ ] IMP-02 AC5 (TRANSFER rows never get a categoryId, classification happens before CAT-02 suggestion) covered
-- [ ] IMP-02 AC6 (rows not matching any special case fall back to normal INCOME/EXPENSE) covered
+- [x] IMP-01 AC3 (duplicates skipped, count reported) covered
+- [x] IMP-01 AC5 (balance updated once with net effect, including TRANSFER target accounts) covered
+- [x] IMP-02 AC1/AC2 (cofrinho guardado/resgatado → TRANSFER to/from auto-created SAVINGS account) covered
+- [x] IMP-02 AC3 (idempotent reuse of an existing account by normalized name) covered
+- [x] IMP-02 AC4 (Pix to RICO/XP → TRANSFER to "Investimentos" INVESTMENT account) covered
+- [x] IMP-02 AC5 (TRANSFER rows never get a categoryId, classification happens before CAT-02 suggestion) covered
+- [x] IMP-02 AC6 (rows not matching any special case fall back to normal INCOME/EXPENSE) covered
 
 **Tests**: unit
 **Gate**: quick
@@ -1019,8 +1019,8 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Oversized file rejected before parsing (AC7)
-- [ ] Happy path (CSV with some duplicates, including cofrinho/investment rows) covered end-to-end against in-memory Mongo
+- [x] Oversized file rejected before parsing (AC7)
+- [x] Happy path (CSV with some duplicates, including cofrinho/investment rows) covered end-to-end against in-memory Mongo
 
 **Tests**: integration
 **Gate**: full
@@ -1038,7 +1038,7 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: `frontend-design`
 
 **Done when**:
-- [ ] Can upload a sample CSV, map columns, and see the imported/skipped summary
+- [x] Can upload a sample CSV, map columns, and see the imported/skipped summary
 
 **Tests**: none
 **Gate**: build
@@ -1056,8 +1056,8 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: `frontend-design`
 
 **Done when**:
-- [ ] CAT-02 AC1 (manual categorization upserts a rule) covered
-- [ ] CAT-02 AC3 (manual creation form pre-selects/suggests a known category, without forcing it) covered
+- [x] CAT-02 AC1 (manual categorization upserts a rule) covered
+- [x] CAT-02 AC3 (manual creation form pre-selects/suggests a known category, without forcing it) covered
 
 **Tests**: unit
 **Gate**: quick
@@ -1075,8 +1075,8 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: NONE
 
 **Done when**:
-- [ ] Unauthenticated call → rejected (401-equivalent)
-- [ ] Happy path (list uncategorized, list rules, categorize with retroactive bulk update) covered end-to-end against in-memory Mongo
+- [x] Unauthenticated call → rejected (401-equivalent)
+- [x] Happy path (list uncategorized, list rules, categorize with retroactive bulk update) covered end-to-end against in-memory Mongo
 
 **Tests**: integration
 **Gate**: full
@@ -1094,9 +1094,9 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: `frontend-design`
 
 **Done when**:
-- [ ] CAT-02 AC6 (uncategorized merchants listed with affected count) covered
-- [ ] CAT-02 AC7 (categorizing one applies retroactively, visible in the UI) covered
-- [ ] CAT-02 AC8/AC9 (existing rules listed and editable, edit reapplies in bulk) covered
+- [x] CAT-02 AC6 (uncategorized merchants listed with affected count) covered
+- [x] CAT-02 AC7 (categorizing one applies retroactively, visible in the UI) covered
+- [x] CAT-02 AC8/AC9 (existing rules listed and editable, edit reapplies in bulk) covered
 
 **Tests**: none
 **Gate**: build
@@ -1114,8 +1114,8 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: `frontend-design`
 
 **Done when**:
-- [ ] TXN-04 AC1/AC2 (selecting a month filters the list via the existing date-range filter) covered
-- [ ] TXN-04 AC3 (no filter selected → full list, unchanged behavior) covered
+- [x] TXN-04 AC1/AC2 (selecting a month filters the list via the existing date-range filter) covered
+- [x] TXN-04 AC3 (no filter selected → full list, unchanged behavior) covered
 
 **Tests**: none
 **Gate**: build
@@ -1133,10 +1133,10 @@ T49 → T51
 **Tools**: MCP: NONE / Skill: `frontend-design`
 
 **Done when**:
-- [ ] UX-01 AC1 (no horizontal overflow at 375-414px on every listed screen) covered
-- [ ] UX-01 AC2 (forms stack vertically below 480px) covered
-- [ ] UX-01 AC3 (interactive touch targets ~40px minimum) covered
-- [ ] UX-01 AC4 (bottom navigation bar replaces horizontal nav below 768px) covered
+- [x] UX-01 AC1 (no horizontal overflow at 375-414px on every listed screen) covered
+- [x] UX-01 AC2 (forms stack vertically below 480px) covered
+- [x] UX-01 AC3 (interactive touch targets ~40px minimum) covered
+- [x] UX-01 AC4 (bottom navigation bar replaces horizontal nav below 768px) covered
 
 **Tests**: none
 **Gate**: build
