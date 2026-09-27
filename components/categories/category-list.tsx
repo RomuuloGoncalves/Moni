@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import {
   createCategoryAction,
   deleteCategoryAction,
+  updateCategoryAction,
 } from "@/app/(dashboard)/categories/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ import {
   Heart,
   Tag,
   Trash2,
+  Edit2,
   Plus,
   type LucideIcon,
 } from "lucide-react";
@@ -202,6 +204,154 @@ function IconPickerDialog({
   );
 }
 
+function EditCategoryDialog({
+  category,
+  onSave,
+}: {
+  category: CategoryItem;
+  onSave: (updated: CategoryItem) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(category.name);
+  const [color, setColor] = useState(category.color);
+  const [iconType, setIconType] = useState(category.iconType);
+  const [error, setError] = useState<string | undefined>();
+  const [isPending, startTransition] = useTransition();
+
+  // Reset form when opened with new data
+  function handleOpenChange(newOpen: boolean) {
+    if (newOpen) {
+      setName(category.name);
+      setColor(category.color);
+      setIconType(category.iconType);
+      setError(undefined);
+    }
+    setOpen(newOpen);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(undefined);
+    startTransition(async () => {
+      // If no changes, just close
+      if (
+        name === category.name &&
+        color === category.color &&
+        iconType === category.iconType
+      ) {
+        setOpen(false);
+        return;
+      }
+
+      const result = await updateCategoryAction(category._id, {
+        name,
+        color,
+        iconType,
+      });
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      onSave(result.data as CategoryItem);
+      setOpen(false);
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger
+        render={
+          <button
+            type="button"
+            className="flex shrink-0 items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label={`Editar ${category.name}`}
+          >
+            <Edit2 className="h-4 w-4" />
+          </button>
+        }
+      />
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar categoria</DialogTitle>
+          <DialogDescription>Altere as informações da categoria.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor={`edit-category-name-${category._id}`}>Nome</Label>
+            <Input
+              id={`edit-category-name-${category._id}`}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={60}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label id={`edit-category-color-label-${category._id}`}>Cor</Label>
+            <div
+              className="flex flex-wrap items-center gap-1.5"
+              role="radiogroup"
+              aria-labelledby={`edit-category-color-label-${category._id}`}
+            >
+              {COLOR_SWATCHES.map((swatch) => (
+                <button
+                  key={swatch}
+                  type="button"
+                  role="radio"
+                  aria-checked={color.toLowerCase() === swatch}
+                  aria-label={swatch}
+                  onClick={() => setColor(swatch)}
+                  className="size-8 shrink-0 rounded-full ring-offset-2 ring-offset-card transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-checked:ring-2 aria-checked:ring-foreground/70"
+                  style={{ backgroundColor: swatch }}
+                />
+              ))}
+              <label
+                className="relative flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full border border-dashed border-input text-xs text-muted-foreground hover:border-ring focus-within:outline-2 focus-within:outline-ring"
+                title="Outra cor"
+                style={
+                  COLOR_SWATCHES.includes(color.toLowerCase())
+                    ? undefined
+                    : { backgroundColor: color, borderStyle: "solid" }
+                }
+              >
+                <span aria-hidden="true">
+                  {COLOR_SWATCHES.includes(color.toLowerCase()) ? "+" : ""}
+                </span>
+                <input
+                  type="color"
+                  aria-label="Outra cor"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                />
+              </label>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label>Ícone</Label>
+            <div className="flex items-center gap-3">
+              <IconPickerDialog value={iconType} onSelect={setIconType} />
+              <p className="text-sm text-muted-foreground">
+                Toque para escolher entre {ICONS.length} ícones
+              </p>
+            </div>
+          </div>
+          <div>
+            <Button type="submit" disabled={isPending}>
+              Salvar
+            </Button>
+          </div>
+        </form>
+        {error ? (
+          <p className="text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function CategoryList({ initialCategories }: { initialCategories: CategoryItem[] }) {
   const [categories, setCategories] = useState(initialCategories);
   const [name, setName] = useState("");
@@ -239,6 +389,10 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
       }
       setCategories((prev) => prev.filter((c) => c._id !== id));
     });
+  }
+
+  function handleUpdate(updated: CategoryItem) {
+    setCategories((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
   }
 
   return (
@@ -357,14 +511,17 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
                   </span>
                   <p className="truncate text-base font-medium">{category.name}</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(category._id, category.name)}
-                  className="flex shrink-0 items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-destructive"
-                  aria-label={`Excluir ${category.name}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <EditCategoryDialog category={category} onSave={handleUpdate} />
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(category._id, category.name)}
+                    className="flex shrink-0 items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-destructive"
+                    aria-label={`Excluir ${category.name}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </CardContent>
             </Card>
           ))

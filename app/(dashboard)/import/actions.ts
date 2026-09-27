@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth/options";
 import { importService, type ImportResult } from "@/services/import.service";
 import { parseOfx } from "@/lib/parsers/ofx";
 import { parseCsv, type CsvColumnMapping } from "@/lib/parsers/csv";
+import { parsePicPayPdf } from "@/lib/parsers/picpay-pdf";
 import { InvalidImportFileError } from "@/lib/parsers/types";
 import { toPlainObject } from "@/lib/serialize";
 
@@ -49,11 +50,16 @@ export async function importFileAction(
     }
 
     const buffer = Buffer.from(await input.file.arrayBuffer());
-    const isCsv = input.file.name.toLowerCase().endsWith(".csv");
+    const fileName = input.file.name.toLowerCase();
 
-    const parsed = isCsv
-      ? parseCsv(buffer, requireColumnMapping(input.columnMapping))
-      : parseOfx(buffer);
+    let parsed;
+    if (fileName.endsWith(".csv")) {
+      parsed = parseCsv(buffer, requireColumnMapping(input.columnMapping));
+    } else if (fileName.endsWith(".pdf")) {
+      parsed = await parsePicPayPdf(buffer);
+    } else {
+      parsed = parseOfx(buffer);
+    }
 
     const result = await importService.importTransactions(userId, input.accountId, parsed);
     return { data: toPlainObject(result) };

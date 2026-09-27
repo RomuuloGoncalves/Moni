@@ -88,11 +88,11 @@ export function ImportForm({ accounts }: { accounts: AccountOption[] }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="import-file">Arquivo (.ofx ou .csv, até 5MB)</Label>
+            <Label htmlFor="import-file">Arquivo (.ofx, .csv ou .pdf, até 5MB)</Label>
             <Input
               id="import-file"
               type="file"
-              accept=".ofx,.csv"
+              accept=".ofx,.csv,.pdf"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               required
             />

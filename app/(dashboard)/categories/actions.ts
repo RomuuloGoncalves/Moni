@@ -56,6 +56,19 @@ export async function createCategoryAction(input: {
   }
 }
 
+export async function updateCategoryAction(
+  id: string,
+  input: { name: string; color: string; iconType: string }
+): Promise<ActionResult<unknown>> {
+  try {
+    const userId = await requireUserId();
+    const category = await categoryService.updateCategory(userId, id, input);
+    return { data: toPlainObject(category) };
+  } catch (err) {
+    return { error: mapError(err) };
+  }
+}
+
 export async function deleteCategoryAction(id: string): Promise<ActionResult<void>> {
   try {
     const userId = await requireUserId();
