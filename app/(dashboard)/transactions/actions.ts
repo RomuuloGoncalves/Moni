@@ -14,6 +14,7 @@ import {
 import type { TransactionType } from "@/models/Transaction";
 import type { ListTransactionsFilters } from "@/repositories/transaction.repository";
 import { toPlainObject } from "@/lib/serialize";
+import { merchantCategoryRuleService } from "@/services/merchant-category-rule.service";
 
 interface ActionResult<T> {
   data?: T;
@@ -113,6 +114,23 @@ export async function setPaidAction(
     const userId = await requireUserId();
     const transaction = await transactionService.setPaidStatus(userId, id, isPaid);
     return { data: toPlainObject(transaction) };
+  } catch (err) {
+    return { error: mapError(err) };
+  }
+}
+
+/**
+ * CAT-02 AC3: used by the manual creation form to pre-select/suggest a
+ * category for a description with a known merchant rule. Never forces the
+ * choice — the user can still change it before saving.
+ */
+export async function suggestCategoryAction(
+  description: string
+): Promise<ActionResult<string | null>> {
+  try {
+    const userId = await requireUserId();
+    const categoryId = await merchantCategoryRuleService.suggestCategory(userId, description);
+    return { data: categoryId };
   } catch (err) {
     return { error: mapError(err) };
   }
