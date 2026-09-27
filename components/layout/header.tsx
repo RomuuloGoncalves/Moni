@@ -12,7 +12,9 @@ import {
   Upload,
   Store,
   MoreHorizontal,
+  LogOut,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "cn";
 import {
@@ -78,6 +80,12 @@ export function Header() {
                 </Link>
               );
             })}
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="ml-2 rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              Sair
+            </button>
           </nav>
         </div>
       </header>
@@ -162,6 +170,18 @@ export function Header() {
                       </li>
                     );
                   })}
+                  <li>
+                    <button
+                      onClick={() => {
+                        setMoreOpen(false);
+                        signOut({ callbackUrl: "/login" });
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <LogOut className="size-[18px]" aria-hidden="true" />
+                      Sair
+                    </button>
+                  </li>
                 </ul>
               </DialogContent>
             </Dialog>
