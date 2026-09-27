@@ -85,18 +85,25 @@ export async function resolveOrCreateAccountByName(
   userId: string,
   name: string,
   accountType: AccountType,
-  session?: mongoose.ClientSession
+  session?: mongoose.ClientSession,
+  cache?: Map<string, any>
 ) {
   const normalized = normalizeAccountName(name);
+  if (cache && cache.has(normalized)) {
+    return cache.get(normalized);
+  }
   const existingAccounts = await accountRepository.list(userId);
   const match = existingAccounts.find((a) => normalizeAccountName(a.name) === normalized);
   if (match) {
+    if (cache) cache.set(normalized, match);
     return match;
   }
-  return accountRepository.create(
+  const created = await accountRepository.create(
     { userId, name: name.trim(), type: accountType, balance: 0 },
     session
   );
+  if (cache) cache.set(normalized, created);
+  return created;
 }
 
 interface PlannedTransaction {
@@ -130,6 +137,7 @@ export async function importTransactions(
 
     await session.withTransaction(async () => {
       const planned: PlannedTransaction[] = [];
+      const accountCache = new Map<string, any>();
 
       for (const row of parsed) {
         const classification = classifyPicPayRow(row);
@@ -140,7 +148,8 @@ export async function importTransactions(
             userId,
             classification.targetAccountName ?? "Conta importada",
             classification.targetAccountType ?? "SAVINGS",
-            session
+            session,
+            accountCache
           );
           const targetAccountId = String(targetAccount._id);
 
