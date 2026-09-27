@@ -41,6 +41,27 @@ export const categoryRepository = {
     return doc;
   },
 
+  async update(
+    userId: string,
+    id: string,
+    data: { name: string; color: string; iconType: string }
+  ) {
+    await connectDB();
+    try {
+      const doc = await Category.findOneAndUpdate(
+        { _id: id, userId },
+        { $set: data },
+        { returnDocument: 'after' }
+      ).lean();
+      return doc;
+    } catch (err: unknown) {
+      if (isDuplicateKeyError(err)) {
+        throw new DuplicateCategoryError(data.name);
+      }
+      throw err;
+    }
+  },
+
   async delete(userId: string, id: string) {
     await connectDB();
     const res = await Category.deleteOne({ _id: id, userId });

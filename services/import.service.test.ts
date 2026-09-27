@@ -103,11 +103,21 @@ describe("classifyPicPayRow (IMP-02)", () => {
     });
   });
 
-  it("IMP-02 AC4: 'Pix enviado' to a counterparty containing RICO/XP (case-insensitive) becomes a TRANSFER to Investimentos", () => {
+  it("IMP-02 AC4: 'Pix enviado' to a counterparty containing RICO, XP, or ROMULO DA SILVA GONCALVES (case-insensitive) becomes a TRANSFER to Investimentos", () => {
     const result = classifyPicPayRow(
       row({ rawType: "Pix enviado", counterparty: "rico ltda", amountCents: -50000 })
     );
     expect(result).toMatchObject({
+      type: "TRANSFER",
+      targetAccountName: "Investimentos",
+      targetAccountType: "INVESTMENT",
+      reversed: false,
+    });
+
+    const user = classifyPicPayRow(
+      row({ rawType: "Pix enviado", counterparty: "ROMULO DA SILVA GONCALVES", amountCents: -20000 })
+    );
+    expect(user).toMatchObject({
       type: "TRANSFER",
       targetAccountName: "Investimentos",
       targetAccountType: "INVESTMENT",

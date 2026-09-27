@@ -62,6 +62,33 @@ export const categoryService = {
     }
   },
 
+  async updateCategory(
+    userId: string,
+    categoryId: string,
+    input: CreateCategoryInput
+  ) {
+    assertValidName(input.name);
+    
+    // Check if category exists
+    const existing = await categoryRepository.findById(userId, categoryId);
+    if (!existing) {
+      throw new CategoryNotFoundError();
+    }
+
+    try {
+      return await categoryRepository.update(userId, categoryId, {
+        name: input.name,
+        color: input.color,
+        iconType: input.iconType,
+      });
+    } catch (err) {
+      if (err instanceof DuplicateCategoryError) {
+        throw err;
+      }
+      throw err;
+    }
+  },
+
   async listCategories(userId: string) {
     return categoryRepository.list(userId);
   },

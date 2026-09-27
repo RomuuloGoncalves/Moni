@@ -96,4 +96,52 @@ describe("categoryRepository", () => {
     expect(result).toBe(true);
     expect(await categoryRepository.findById(userId, String(created._id))).toBeNull();
   });
+
+  it("update modifies the category and returns it", async () => {
+    const userId = newUserId();
+    const created = await categoryRepository.create({
+      userId,
+      name: "Old Name",
+      color: "#000",
+      iconType: "old",
+    });
+
+    const updated = await categoryRepository.update(userId, String(created._id), {
+      name: "New Name",
+      color: "#FFF",
+      iconType: "new",
+    });
+
+    expect(updated).not.toBeNull();
+    expect(updated?.name).toBe("New Name");
+    expect(updated?.color).toBe("#FFF");
+    expect(updated?.iconType).toBe("new");
+
+    const fetched = await categoryRepository.findById(userId, String(created._id));
+    expect(fetched?.name).toBe("New Name");
+  });
+
+  it("update raises DuplicateCategoryError on duplicate name", async () => {
+    const userId = newUserId();
+    await categoryRepository.create({
+      userId,
+      name: "Existing",
+      color: "#000",
+      iconType: "icon",
+    });
+    const created2 = await categoryRepository.create({
+      userId,
+      name: "Other",
+      color: "#111",
+      iconType: "icon",
+    });
+
+    await expect(
+      categoryRepository.update(userId, String(created2._id), {
+        name: "Existing",
+        color: "#FFF",
+        iconType: "icon",
+      })
+    ).rejects.toBeInstanceOf(DuplicateCategoryError);
+  });
 });
