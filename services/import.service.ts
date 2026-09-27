@@ -250,7 +250,26 @@ export async function importTransactions(
 
       for (const [accId, delta] of balanceDeltas) {
         if (delta !== 0) {
-          await accountService.adjustBalance(accId, delta, session);
+          const updatedAccount = await accountService.adjustBalance(accId, delta, session);
+          
+          if (updatedAccount && updatedAccount.type === "SAVINGS" && updatedAccount.balance < 0) {
+            const yieldAmount = Math.abs(updatedAccount.balance);
+            
+            await transactionRepository.create(
+              {
+                userId,
+                accountId: accId,
+                type: "INCOME",
+                amount: yieldAmount,
+                date: maxDate,
+                description: "Rendimento CDI (Auto-ajuste)",
+                isPaid: true,
+              },
+              session
+            );
+            
+            await accountService.adjustBalance(accId, yieldAmount, session);
+          }
         }
       }
 
