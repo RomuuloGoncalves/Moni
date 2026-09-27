@@ -9,7 +9,7 @@ import type { AccountType } from "@/models/Account";
 import type { TransactionType } from "@/models/Transaction";
 
 const INVESTMENT_ACCOUNT_NAME = "Investimentos";
-const INVESTMENT_KEYWORDS = ["RICO", "XP"];
+const INVESTMENT_KEYWORDS = ["RICO", "XP", "ROMULO DA SILVA GONCALVES"];
 
 export interface ImportResult {
   imported: number;

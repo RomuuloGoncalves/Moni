@@ -21,6 +21,7 @@
     "next-auth": "^4.24.15",
     "ofx-js": "^1.1.1",
     "papaparse": "^5.7.0",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.8.0",
