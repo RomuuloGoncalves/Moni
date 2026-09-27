@@ -41,12 +41,12 @@ export interface DashboardData {
   budgetProgress: unknown[];
 }
 
-export async function getDashboardDataAction(): Promise<ActionResult<DashboardData>> {
+export async function getDashboardDataAction(params?: { month?: number; year?: number }): Promise<ActionResult<DashboardData>> {
   try {
     const userId = await requireUserId();
     const now = new Date();
-    const month = now.getUTCMonth() + 1;
-    const year = now.getUTCFullYear();
+    const month = params?.month ?? (now.getUTCMonth() + 1);
+    const year = params?.year ?? now.getUTCFullYear();
 
     const [consolidatedBalance, summaryByCategory, categories, budgetProgress] =
       await Promise.all([
