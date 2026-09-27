@@ -20,6 +20,10 @@ const transactionSchema = new Schema({
 // is treated as a duplicate transaction.
 transactionSchema.index({ accountId: 1, date: 1, amount: 1, description: 1 });
 
+// Performance indexes for Dashboard and transaction listing
+transactionSchema.index({ userId: 1, date: -1 });
+transactionSchema.index({ accountId: 1, date: -1 });
+
 export type TransactionDoc = InferSchemaType<typeof transactionSchema>;
 
 export const Transaction =

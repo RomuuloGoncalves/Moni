@@ -59,6 +59,30 @@ Subtotal dos lançamentos 128,71
     expect(result[2].date.toISOString()).toContain("2025-12-30T12:00:00");
   });
 
+  it("extracts transactions correctly with hyphenated dates", async () => {
+    const fakeText = `
+ROMULO DA SILVA GONCALVES,
+Vencimento: 10-01-2026 | Fechamento: 05-01-2026
+PicPay Mastercard® GOLD
+Picpay Card
+Transações Nacionais
+Data Estabelecimento Valor (R$)
+04/01 COMPRA DE ANO NOVO 100,00
+Subtotal dos lançamentos 100,00
+    `;
+    
+    mockGetText.mockResolvedValueOnce({ text: fakeText });
+
+    const buffer = Buffer.from("fake-pdf");
+    const result = await parsePicPayPdf(buffer);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].description).toBe("COMPRA DE ANO NOVO");
+    expect(result[0].amountCents).toBe(-10000);
+    // Vencimento in Jan 2026, Tx in Jan, so Tx Year should be 2026
+    expect(result[0].date.toISOString()).toContain("2026-01-04T12:00:00");
+  });
+
   it("throws InvalidImportFileError if no vencimento is found", async () => {
     mockGetText.mockResolvedValueOnce({ text: "Texto sem data de vencimento." });
     

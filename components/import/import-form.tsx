@@ -27,43 +27,75 @@ const DEFAULT_MAPPING: Record<(typeof CSV_FIELDS)[number]["key"], string> = {
   counterparty: "origem / destino",
 };
 
+export interface FileProgress {
+  status: "pending" | "importing" | "success" | "error";
+  error?: string;
+  summary?: { imported: number; skipped: number };
+}
+
 export function ImportForm({ accounts }: { accounts: AccountOption[] }) {
   const [accountId, setAccountId] = useState(accounts[0]?._id ?? "");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [fileStatuses, setFileStatuses] = useState<Record<string, FileProgress>>({});
   const [mapping, setMapping] = useState(DEFAULT_MAPPING);
-  const [error, setError] = useState<string | undefined>();
-  const [summary, setSummary] = useState<{ imported: number; skipped: number } | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const isCsv = file?.name.toLowerCase().endsWith(".csv") ?? false;
+  const hasCsv = files.some((f) => f.name.toLowerCase().endsWith(".csv"));
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(undefined);
-    setSummary(null);
-    if (!file || !accountId) {
-      setError("selecione uma conta e um arquivo");
-      return;
+    if (files.length === 0 || !accountId) return;
+
+    // Reset statuses to pending for all selected files
+    const initialStatuses: Record<string, FileProgress> = {};
+    for (const f of files) {
+      initialStatuses[f.name] = { status: "pending" };
     }
+    setFileStatuses(initialStatuses);
+
     startTransition(async () => {
-      const result = await importFileAction({
-        accountId,
-        file,
-        columnMapping: isCsv
-          ? {
-              date: mapping.date,
-              amount: mapping.amount,
-              description: mapping.description,
-              counterparty: mapping.counterparty || undefined,
-              rawType: mapping.description,
-            }
-          : undefined,
-      });
-      if (result.error) {
-        setError(result.error);
-        return;
+      for (const f of files) {
+        // Mark as importing
+        setFileStatuses((prev) => ({
+          ...prev,
+          [f.name]: { status: "importing" },
+        }));
+
+        const isThisCsv = f.name.toLowerCase().endsWith(".csv");
+        
+        try {
+          const result = await importFileAction({
+            accountId,
+            file: f,
+            columnMapping: isThisCsv
+              ? {
+                  date: mapping.date,
+                  amount: mapping.amount,
+                  description: mapping.description,
+                  counterparty: mapping.counterparty || undefined,
+                  rawType: mapping.description,
+                }
+              : undefined,
+          });
+
+          if (result.error) {
+            setFileStatuses((prev) => ({
+              ...prev,
+              [f.name]: { status: "error", error: result.error },
+            }));
+          } else {
+            setFileStatuses((prev) => ({
+              ...prev,
+              [f.name]: { status: "success", summary: result.data ?? { imported: 0, skipped: 0 } },
+            }));
+          }
+        } catch (err) {
+          setFileStatuses((prev) => ({
+            ...prev,
+            [f.name]: { status: "error", error: "Erro desconhecido ao importar" },
+          }));
+        }
       }
-      setSummary(result.data ?? null);
     });
   }
 
@@ -93,12 +125,13 @@ export function ImportForm({ accounts }: { accounts: AccountOption[] }) {
               id="import-file"
               type="file"
               accept=".ofx,.csv,.pdf"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              multiple
+              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
               required
             />
           </div>
 
-          {isCsv ? (
+          {hasCsv ? (
             <div className="flex flex-col gap-3 rounded-lg border border-border/60 p-3">
               <p className="text-sm font-medium">Mapeamento de colunas do CSV</p>
               {CSV_FIELDS.map((field) => (
@@ -122,17 +155,32 @@ export function ImportForm({ accounts }: { accounts: AccountOption[] }) {
           </Button>
         </form>
 
-        {error ? (
-          <p className="text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        ) : null}
+        {files.length > 0 && Object.keys(fileStatuses).length > 0 ? (
+          <div className="mt-4 flex flex-col gap-3">
+            <h3 className="text-sm font-medium">Progresso da Importação</h3>
+            <div className="flex flex-col gap-2">
+              {files.map((f) => {
+                const statusInfo = fileStatuses[f.name];
+                if (!statusInfo) return null;
 
-        {summary ? (
-          <p className="text-sm">
-            <strong>{summary.imported}</strong> transações importadas,{" "}
-            <strong>{summary.skipped}</strong> duplicadas puladas.
-          </p>
+                return (
+                  <div key={f.name} className="flex items-center justify-between rounded-lg border p-3 text-sm">
+                    <span className="font-medium truncate max-w-[50%]">{f.name}</span>
+                    <div className="flex items-center gap-2">
+                      {statusInfo.status === "pending" && <span className="text-muted-foreground">Aguardando...</span>}
+                      {statusInfo.status === "importing" && <span className="text-blue-500 font-medium animate-pulse">Importando...</span>}
+                      {statusInfo.status === "error" && <span className="text-destructive max-w-xs truncate" title={statusInfo.error}>{statusInfo.error}</span>}
+                      {statusInfo.status === "success" && (
+                        <span className="text-green-600">
+                          {statusInfo.summary?.imported} importadas, {statusInfo.summary?.skipped} duplicadas
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         ) : null}
       </CardContent>
     </Card>

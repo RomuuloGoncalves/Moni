@@ -7,8 +7,8 @@ export async function parsePicPayPdf(buffer: Buffer): Promise<ParsedTransaction[
     const data = await parser.getText();
     const text = data.text;
 
-    // Match DD/MM/YYYY | DD/MM/YYYY (Vencimento | Fechamento)
-    const datesMatch = text.match(/(\d{2})\/(\d{2})\/(\d{4})\s*\|\s*(\d{2})\/(\d{2})\/(\d{4})/);
+    // Match DD/MM/YYYY | DD/MM/YYYY or DD-MM-YYYY | ... DD-MM-YYYY (Vencimento | Fechamento)
+    const datesMatch = text.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})\s*\|.*?(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
     if (!datesMatch) {
       throw new InvalidImportFileError(
         "Não foi possível encontrar a data de vencimento na fatura."
