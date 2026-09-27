@@ -30,6 +30,7 @@ async function requireUserId(): Promise<string> {
 
 export interface DashboardData {
   consolidatedBalance: number;
+  availableBalance: number;
   month: number;
   year: number;
   summaryByCategory: {
@@ -48,7 +49,7 @@ export async function getDashboardDataAction(params?: { month?: number; year?: n
     const month = params?.month ?? (now.getUTCMonth() + 1);
     const year = params?.year ?? now.getUTCFullYear();
 
-    const [consolidatedBalance, summaryByCategory, categories, budgetProgress] =
+    const [balanceResult, summaryByCategory, categories, budgetProgress] =
       await Promise.all([
         dashboardService.getConsolidatedBalance(userId),
         dashboardService.getMonthlySummaryByCategory(userId, month, year),
@@ -58,7 +59,8 @@ export async function getDashboardDataAction(params?: { month?: number; year?: n
 
     return {
       data: toPlainObject({
-        consolidatedBalance,
+        consolidatedBalance: balanceResult.total,
+        availableBalance: balanceResult.available,
         month,
         year,
         summaryByCategory,

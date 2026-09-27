@@ -16,9 +16,13 @@ function monthRange(month: number, year: number) {
 
 export const dashboardService = {
   /** DASH-01 AC1: sum of the balance of every account belonging to the user. */
-  async getConsolidatedBalance(userId: string): Promise<number> {
+  async getConsolidatedBalance(userId: string): Promise<{ total: number; available: number }> {
     const accounts = await accountRepository.list(userId);
-    return accounts.reduce((sum, account) => sum + (account.balance ?? 0), 0);
+    const total = accounts.reduce((sum, account) => sum + (account.balance ?? 0), 0);
+    const available = accounts
+      .filter((a) => a.type === "CASH" || a.type === "CHECKING")
+      .reduce((sum, account) => sum + (account.balance ?? 0), 0);
+    return { total, available };
   },
 
   /**

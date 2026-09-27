@@ -16,6 +16,7 @@ export default async function DashboardPage({
   const result = await getDashboardDataAction({ month, year });
   const data = result.data ?? {
     consolidatedBalance: 0,
+    availableBalance: 0,
     month: month ?? new Date().getUTCMonth() + 1,
     year: year ?? new Date().getUTCFullYear(),
     summaryByCategory: [],
@@ -34,7 +35,7 @@ export default async function DashboardPage({
         </div>
         <MonthSelector currentMonth={data.month} currentYear={data.year} />
       </div>
-      <ConsolidatedBalanceCard balanceCents={data.consolidatedBalance} />
+      <ConsolidatedBalanceCard balanceCents={data.consolidatedBalance} availableBalanceCents={data.availableBalance} />
       <CategorySummary
         summary={data.summaryByCategory as never}
         categories={data.categories as never}
