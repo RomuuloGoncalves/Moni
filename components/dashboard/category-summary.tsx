@@ -59,14 +59,16 @@ export interface CategoryMeta {
 export function CategorySummary({
   summary,
   categories,
+  type = "expense",
 }: {
   summary: CategorySummaryItem[];
   categories: CategoryMeta[];
+  type?: "income" | "expense";
 }) {
   const categoryById = new Map(categories.map((c) => [c._id, c]));
 
   const rows = summary
-    .filter((item) => item.expense > 0)
+    .filter((item) => type === "expense" ? item.expense > 0 : item.income > 0)
     .map((item, index) => {
       const meta = item.categoryId ? categoryById.get(item.categoryId) : undefined;
       return {
@@ -74,20 +76,24 @@ export function CategorySummary({
         name: meta?.name ?? "Sem categoria",
         iconType: meta?.iconType ?? "tag",
         color: meta?.color || PALETTE[index % PALETTE.length],
-        expense: item.expense,
-        income: item.income,
+        value: type === "expense" ? item.expense : item.income,
       };
     })
-    .sort((a, b) => b.expense - a.expense);
+    .sort((a, b) => b.value - a.value);
 
-  const totalExpense = rows.reduce((sum, r) => sum + r.expense, 0);
+  const totalValue = rows.reduce((sum, r) => sum + r.value, 0);
+
+  const title = type === "expense" ? "Gastos do mês por categoria" : "Entradas do mês por categoria";
+  const emptyMessage = type === "expense" 
+    ? "Nenhuma despesa paga registrada neste mês ainda." 
+    : "Nenhuma entrada registrada neste mês ainda.";
 
   if (rows.length === 0) {
     return (
       <div className="rounded-xl border bg-card p-6">
-        <h2 className="text-sm font-medium text-muted-foreground">Gastos do mês por categoria</h2>
+        <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
         <p className="mt-4 text-sm text-muted-foreground">
-          Nenhuma despesa paga registrada neste mês ainda.
+          {emptyMessage}
         </p>
       </div>
     );
@@ -99,14 +105,14 @@ export function CategorySummary({
 
   return (
     <div className="rounded-xl border bg-card p-6">
-      <h2 className="text-sm font-medium text-muted-foreground">Gastos do mês por categoria</h2>
+      <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
       <div className="mt-4 flex flex-col items-center gap-6 sm:flex-row sm:items-start">
         <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-64 w-full max-w-64">
           <PieChart>
             <ChartTooltip
               content={<ChartTooltipContent hideLabel formatter={(value) => formatCurrency(Number(value))} />}
             />
-            <Pie data={rows} dataKey="expense" nameKey="name" innerRadius={55} outerRadius={90} strokeWidth={2}>
+            <Pie data={rows} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} strokeWidth={2}>
               {rows.map((row) => (
                 <Cell key={row.key} fill={row.color} />
               ))}
@@ -117,7 +123,7 @@ export function CategorySummary({
         <ul className="w-full flex-1 space-y-3">
           {rows.map((row) => {
             const Icon = ICON_MAP[row.iconType] ?? Tag;
-            const percentage = totalExpense > 0 ? Math.round((row.expense / totalExpense) * 100) : 0;
+            const percentage = totalValue > 0 ? Math.round((row.value / totalValue) * 100) : 0;
             return (
               <li key={row.key} className="flex items-center justify-between gap-3 text-sm">
                 <div className="flex items-center gap-2 text-foreground">
@@ -130,7 +136,7 @@ export function CategorySummary({
                   <span>{row.name}</span>
                 </div>
                 <div className="flex items-baseline gap-2 tabular-nums">
-                  <span className="font-medium">{formatCurrency(row.expense)}</span>
+                  <span className="font-medium">{formatCurrency(row.value)}</span>
                   <span className="w-9 text-right text-xs text-muted-foreground">{percentage}%</span>
                 </div>
               </li>

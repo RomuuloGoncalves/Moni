@@ -22,8 +22,7 @@ describe("parsePicPayPdf", () => {
 
   it("extracts transactions correctly and infers year", async () => {
     const fakeText = `
-ROMULO DA SILVA GONCALVES,
-Vencimento: 10/09/2026 | Fechamento: 03/09/2026 
+ROMULO DA SILVA GONCALVES, MARIA PEREIRA DA SILVA NUNES, 000267, DONATO FLORES, CASA, 18275768 TATUI - SP 10/09/2026 | 03/09/2026 Vencimento: Fechamen
 PicPay Mastercard® GOLD
 Picpay Card
 Transações Nacionais

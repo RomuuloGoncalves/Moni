@@ -24,6 +24,12 @@ export default async function DashboardPage() {
       <CategorySummary
         summary={data.summaryByCategory as never}
         categories={data.categories as never}
+        type="income"
+      />
+      <CategorySummary
+        summary={data.summaryByCategory as never}
+        categories={data.categories as never}
+        type="expense"
       />
       <BudgetProgress
         progress={data.budgetProgress as never}
