@@ -3,6 +3,7 @@ import { transactionRepository } from "@/repositories/transaction.repository";
 import { accountService } from "@/services/account.service";
 import { accountRepository } from "@/repositories/account.repository";
 import { categoryRepository } from "@/repositories/category.repository";
+import { merchantCategoryRuleService } from "@/services/merchant-category-rule.service";
 import type { TransactionType } from "@/models/Transaction";
 import type {
   ListTransactionsFilters,
@@ -174,6 +175,24 @@ async function applyBalanceEffect(
   }
 }
 
+/**
+ * CAT-02 AC1: whenever an EXPENSE/INCOME transaction is saved with a
+ * manually-set categoryId, upserts the merchantKey -> categoryId rule so
+ * future transactions with the same description can reuse it. TRANSFER
+ * transactions never carry a categoryId, so this is a no-op for them.
+ */
+async function maybeUpsertMerchantRule(
+  userId: string,
+  type: TransactionType,
+  categoryId: string | undefined,
+  description: string
+) {
+  if (type === "TRANSFER" || !categoryId) {
+    return;
+  }
+  await merchantCategoryRuleService.upsertRuleFromCategorization(userId, description, categoryId);
+}
+
 export const transactionService = {
   async createTransaction(userId: string, input: CreateTransactionInput) {
     assertValidAmount(input.amount);
@@ -219,6 +238,7 @@ export const transactionService = {
           );
         }
       });
+      await maybeUpsertMerchantRule(userId, input.type, input.categoryId, input.description);
       return created;
     } finally {
       await session.endSession();
@@ -294,6 +314,7 @@ export const transactionService = {
           );
         }
       });
+      await maybeUpsertMerchantRule(userId, nextType, nextCategoryId, nextDescription);
       return updated;
     } finally {
       await session.endSession();

@@ -41,6 +41,12 @@ vi.mock("@/repositories/account.repository", () => ({
   },
 }));
 
+vi.mock("@/services/merchant-category-rule.service", () => ({
+  merchantCategoryRuleService: {
+    upsertRuleFromCategorization: vi.fn(),
+  },
+}));
+
 vi.mock("@/repositories/category.repository", () => ({
   categoryRepository: {
     findById: vi.fn(),
@@ -52,6 +58,7 @@ import { transactionRepository } from "@/repositories/transaction.repository";
 import { accountService } from "@/services/account.service";
 import { accountRepository } from "@/repositories/account.repository";
 import { categoryRepository } from "@/repositories/category.repository";
+import { merchantCategoryRuleService } from "@/services/merchant-category-rule.service";
 import {
   transactionService,
   InvalidTransactionAmountError,
@@ -68,6 +75,7 @@ const repo = vi.mocked(transactionRepository);
 const acctSvc = vi.mocked(accountService);
 const acctRepo = vi.mocked(accountRepository);
 const catRepo = vi.mocked(categoryRepository);
+const merchantSvc = vi.mocked(merchantCategoryRuleService);
 
 const userId = "user1";
 const accountId = "acc1";
@@ -164,6 +172,42 @@ describe("transactionService.createTransaction", () => {
     });
 
     expect(acctSvc.adjustBalance).toHaveBeenCalledWith(accountId, -3000, fakeSession);
+  });
+
+  it("CAT-02 AC1: saving an EXPENSE/INCOME with a manual categoryId upserts a merchant rule", async () => {
+    repo.create.mockResolvedValue({ _id: "t1" } as never);
+
+    await transactionService.createTransaction(userId, {
+      accountId,
+      categoryId,
+      type: "EXPENSE",
+      amount: 3000,
+      date: new Date(),
+      description: "UBER *TRIP",
+      isPaid: true,
+    });
+
+    expect(merchantSvc.upsertRuleFromCategorization).toHaveBeenCalledWith(
+      userId,
+      "UBER *TRIP",
+      categoryId
+    );
+  });
+
+  it("CAT-02: does not upsert a merchant rule for TRANSFER transactions (never have a categoryId)", async () => {
+    repo.create.mockResolvedValue({ _id: "t1" } as never);
+
+    await transactionService.createTransaction(userId, {
+      accountId,
+      toAccountId,
+      type: "TRANSFER",
+      amount: 3000,
+      date: new Date(),
+      description: "Transferência",
+      isPaid: true,
+    });
+
+    expect(merchantSvc.upsertRuleFromCategorization).not.toHaveBeenCalled();
   });
 
   it("TXN-01 AC2: unpaid transaction does not change any balance", async () => {
