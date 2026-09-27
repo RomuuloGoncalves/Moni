@@ -103,7 +103,13 @@ export function AccountList({ initialAccounts }: { initialAccounts: AccountItem[
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Contas</h1>
+          <p className="text-sm text-muted-foreground">
+            Gerencie suas contas correntes, cartões, poupanças e dinheiro.
+          </p>
+        </div>
         <Dialog
           open={open}
           onOpenChange={(next) => {
@@ -113,7 +119,7 @@ export function AccountList({ initialAccounts }: { initialAccounts: AccountItem[
         >
           <DialogTrigger
             render={
-              <Button size="default" className="gap-1.5" onClick={() => setEditingId(null)}>
+              <Button size="default" className="shrink-0 gap-1.5" onClick={() => setEditingId(null)}>
                 <Plus className="size-4" />
                 Nova
               </Button>

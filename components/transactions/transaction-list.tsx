@@ -6,6 +6,8 @@ import {
   updateTransactionAction,
   deleteTransactionAction,
   setPaidAction,
+  suggestCategoryAction,
+  listTransactionsAction,
 } from "@/app/(dashboard)/transactions/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowUpCircle, ArrowDownCircle, ArrowLeftRight, Trash2, Plus } from "lucide-react";
+import {
+  ArrowUpCircle,
+  ArrowDownCircle,
+  ArrowLeftRight,
+  Trash2,
+  Plus,
+  CalendarRange,
+} from "lucide-react";
 
 type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
 
@@ -75,6 +84,14 @@ function formatCurrency(cents: number): string {
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+/** TXN-04: "YYYY-MM" -> inclusive [from, to] range covering that whole month. */
+function monthToRange(month: string): { from: Date; to: Date } {
+  const [year, monthIndex] = month.split("-").map(Number);
+  const from = new Date(Date.UTC(year, monthIndex - 1, 1, 0, 0, 0, 0));
+  const to = new Date(Date.UTC(year, monthIndex, 0, 23, 59, 59, 999));
+  return { from, to };
+}
+
 export function TransactionList({
   initialTransactions,
   accounts,
@@ -88,6 +105,8 @@ export function TransactionList({
   const [error, setError] = useState<string | undefined>();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const [monthFilter, setMonthFilter] = useState("");
+  const [isFiltering, startFilterTransition] = useTransition();
 
   const [type, setType] = useState<TransactionType>("EXPENSE");
   const [accountId, setAccountId] = useState(accounts[0]?._id ?? "");
@@ -185,6 +204,20 @@ export function TransactionList({
     });
   }
 
+  function handleMonthChange(value: string) {
+    setMonthFilter(value);
+    setError(undefined);
+    startFilterTransition(async () => {
+      const filters = value ? monthToRange(value) : {};
+      const result = await listTransactionsAction(filters);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setTransactions((result.data as TransactionItem[]) ?? []);
+    });
+  }
+
   function handleTogglePaid(item: TransactionItem) {
     setError(undefined);
     startTransition(async () => {
@@ -201,11 +234,17 @@ export function TransactionList({
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
+          <p className="text-sm text-muted-foreground">
+            Registre receitas, despesas e transferências e acompanhe seu saldo.
+          </p>
+        </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger
             render={
-              <Button size="default" className="gap-1.5">
+              <Button size="default" className="shrink-0 gap-1.5">
                 <Plus className="size-4" />
                 Nova
               </Button>
@@ -321,6 +360,17 @@ export function TransactionList({
                   id="tx-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  onBlur={() => {
+                    if (type === "TRANSFER" || !description.trim()) {
+                      return;
+                    }
+                    startTransition(async () => {
+                      const result = await suggestCategoryAction(description);
+                      if (result.data) {
+                        setCategoryId(result.data);
+                      }
+                    });
+                  }}
                   maxLength={200}
                   required
                 />
@@ -352,6 +402,32 @@ export function TransactionList({
             ) : null}
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Label htmlFor="tx-month-filter" className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <CalendarRange className="size-4" aria-hidden="true" />
+          Mês
+        </Label>
+        <Input
+          id="tx-month-filter"
+          type="month"
+          value={monthFilter}
+          onChange={(e) => handleMonthChange(e.target.value)}
+          className="w-40"
+          aria-label="Filtrar transações por mês"
+        />
+        {monthFilter ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={isFiltering}
+            onClick={() => handleMonthChange("")}
+          >
+            Limpar filtro
+          </Button>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-2">
