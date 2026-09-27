@@ -158,6 +158,47 @@ describe("transaction Server Actions", () => {
     expect((list.data as { description: string }[])[0].description).toBe("Recent");
   });
 
+  it("TXN-04: listTransactionsAction filters by date range (month filter) and falls back to the full list when no filter is given", async () => {
+    const userId = newId();
+    mockSession(userId);
+    const account = await accountRepository.create({
+      userId,
+      name: "Conta",
+      type: "CHECKING",
+      balance: 0,
+    });
+    const categoryId = await createCategory(userId);
+    await createTransactionAction({
+      accountId: String(account._id),
+      categoryId,
+      type: "EXPENSE",
+      amount: 100,
+      date: new Date("2026-01-15"),
+      description: "Janeiro",
+      isPaid: false,
+    });
+    await createTransactionAction({
+      accountId: String(account._id),
+      categoryId,
+      type: "EXPENSE",
+      amount: 200,
+      date: new Date("2026-02-10"),
+      description: "Fevereiro",
+      isPaid: false,
+    });
+
+    const filtered = await listTransactionsAction({
+      from: new Date("2026-02-01T00:00:00.000Z"),
+      to: new Date("2026-02-28T23:59:59.999Z"),
+    });
+    expect(filtered.error).toBeUndefined();
+    expect(filtered.data).toHaveLength(1);
+    expect((filtered.data as { description: string }[])[0].description).toBe("Fevereiro");
+
+    const unfiltered = await listTransactionsAction();
+    expect(unfiltered.data).toHaveLength(2);
+  });
+
   it("setPaidAction toggles isPaid and applies/reverts the balance effect", async () => {
     const userId = newId();
     mockSession(userId);

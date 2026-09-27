@@ -21,12 +21,6 @@ export default async function TransactionsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Transações</h1>
-        <p className="text-sm text-muted-foreground">
-          Registre receitas, despesas e transferências e acompanhe seu saldo.
-        </p>
-      </div>
       <TransactionList
         initialTransactions={transactions.map((t) => ({
           ...t,
