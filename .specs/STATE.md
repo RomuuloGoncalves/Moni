@@ -8,9 +8,16 @@
 | AD-002 | Toda mutação que altera `balance` de uma `Account` usa `mongoose.startSession().withTransaction(...)` envolvendo o `$inc` atômico do saldo e o write da(s) transação(ões), nunca uma escrita solta. | active | Garante que saldo e histórico de transações nunca fiquem inconsistentes entre si, mesmo sob falha parcial ou concorrência. Decidido no design de `moni-mvp`. |
 | AD-003 | Valores monetários são sempre armazenados como inteiro em centavos (`number`), nunca `float`/decimal. | active | Evita erros de arredondamento de ponto flutuante em cálculos financeiros. Decidido no design de `moni-mvp`. |
 
+## Decisions (cont.)
+
+| ID | Decision | Status | Rationale |
+| -- | -------- | ------ | --------- |
+| AD-004 | Categorias correlacionadas podem ser vinculadas em um **BudgetGroup** (nome + limite único); progresso mensal soma EXPENSE pagas de todos os membros; UI do Resumo usa barra empilhada por cor de categoria. Orçamento solo por categoria permanece para categorias fora de grupos. | active | Pedido do usuário (ex.: Mercado + Refeição); evita duplicar limite mental e mantém rastreio por categoria nas transações. |
+
 ## Handoff
 
-- **Feature atual**: `moni-mvp`
+- **Feature atual**: `shared-budget-group` (implementada nesta sessão)
+- **Feature anterior**: `moni-mvp`
 - **Fases concluídas**: Specify (spec.md), Design (design.md), Tasks (tasks.md, **51 tasks / 9 fases / 6 batches** após revisão pós-Batch 4, `validate_tasks.py` limpo: 0 erros, warnings pré-existentes ok), Context UI (context.md), Execute Batch 1 (T1-T11, Foundation+Auth), Execute Batch 2 (T12-T21, Accounts+Categories), Execute Batch 3 (T22-T28, Transactions), Execute Batch 4 (T29-T36, Dashboard+Budget)
 - **Revisão de spec/design/tasks pós-Batch 4 (esta run, sem código, sem commit)**: incorporadas novas decisões do usuário antes do Batch 5 rodar:
   - Cofrinho e investimento não são gasto: viram TRANSFER pra conta virtual (cofrinho = `SAVINGS` auto-criada por nome; Rico/XP detectado por Pix enviado com "RICO"/"XP" no campo origem/destino = conta fixa "Investimentos" tipo `INVESTMENT`) — `IMP-02` em spec.md

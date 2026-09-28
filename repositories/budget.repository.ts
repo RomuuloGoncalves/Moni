@@ -23,6 +23,17 @@ export const budgetRepository = {
     const doc = await Budget.findOne({ userId, categoryId }).lean();
     return doc;
   },
+
+  async deleteByCategory(userId: string, categoryId: string) {
+    await connectDB();
+    await Budget.deleteOne({ userId, categoryId });
+  },
+
+  async deleteByCategories(userId: string, categoryIds: string[]) {
+    if (categoryIds.length === 0) return;
+    await connectDB();
+    await Budget.deleteMany({ userId, categoryId: { $in: categoryIds } });
+  },
 };
 
 export default budgetRepository;

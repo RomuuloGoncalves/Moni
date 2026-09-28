@@ -118,6 +118,7 @@ describe("dashboard Server Action", () => {
     expect(result.error).toBeUndefined();
     expect(result.data!.budgetProgress).toEqual([
       {
+        kind: "solo",
         categoryId,
         limitCents: 50000,
         spentCents: 60000,

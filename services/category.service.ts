@@ -101,6 +101,8 @@ export const categoryService = {
     if (await categoryHasTransactions(categoryId)) {
       throw new CategoryHasTransactionsError();
     }
+    const { budgetGroupService } = await import("@/services/budget-group.service");
+    await budgetGroupService.onCategoryDeleted(userId, categoryId);
     await categoryRepository.delete(userId, categoryId);
   },
 };

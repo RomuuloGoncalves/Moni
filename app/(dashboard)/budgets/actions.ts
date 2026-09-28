@@ -6,7 +6,14 @@ import {
   budgetService,
   InvalidBudgetLimitError,
   CategoryNotFoundError,
+  CategoryInBudgetGroupError,
 } from "@/services/budget.service";
+import {
+  budgetGroupService,
+  BudgetGroupNotFoundError,
+  DuplicateBudgetGroupNameError,
+  InvalidBudgetGroupError,
+} from "@/services/budget-group.service";
 import { toPlainObject } from "@/lib/serialize";
 
 interface ActionResult<T> {
@@ -58,6 +65,53 @@ export async function getBudgetProgressAction(): Promise<ActionResult<unknown[]>
   }
 }
 
+export async function listBudgetGroupsAction(): Promise<ActionResult<unknown[]>> {
+  try {
+    const userId = await requireUserId();
+    const groups = await budgetGroupService.listGroups(userId);
+    return { data: toPlainObject(groups) };
+  } catch (err) {
+    return { error: mapError(err) };
+  }
+}
+
+export async function createBudgetGroupAction(input: {
+  name: string;
+  limitCents: number;
+  categoryIds: string[];
+}): Promise<ActionResult<unknown>> {
+  try {
+    const userId = await requireUserId();
+    const group = await budgetGroupService.createGroup(userId, input);
+    return { data: toPlainObject(group) };
+  } catch (err) {
+    return { error: mapError(err) };
+  }
+}
+
+export async function updateBudgetGroupAction(
+  groupId: string,
+  input: { name?: string; limitCents?: number; categoryIds?: string[] }
+): Promise<ActionResult<unknown>> {
+  try {
+    const userId = await requireUserId();
+    const group = await budgetGroupService.updateGroup(userId, groupId, input);
+    return { data: toPlainObject(group) };
+  } catch (err) {
+    return { error: mapError(err) };
+  }
+}
+
+export async function deleteBudgetGroupAction(groupId: string): Promise<ActionResult<void>> {
+  try {
+    const userId = await requireUserId();
+    await budgetGroupService.deleteGroup(userId, groupId);
+    return { data: undefined };
+  } catch (err) {
+    return { error: mapError(err) };
+  }
+}
+
 function mapError(err: unknown): string {
   if (err instanceof UnauthenticatedError) {
     return "não autenticado";
@@ -67,6 +121,18 @@ function mapError(err: unknown): string {
   }
   if (err instanceof CategoryNotFoundError) {
     return "categoria não encontrada";
+  }
+  if (err instanceof CategoryInBudgetGroupError) {
+    return "esta categoria já faz parte de um grupo de orçamento compartilhado";
+  }
+  if (err instanceof BudgetGroupNotFoundError) {
+    return "grupo de orçamento não encontrado";
+  }
+  if (err instanceof DuplicateBudgetGroupNameError) {
+    return "já existe um grupo com este nome";
+  }
+  if (err instanceof InvalidBudgetGroupError) {
+    return err.message;
   }
   throw err;
 }
