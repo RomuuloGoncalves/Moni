@@ -66,6 +66,23 @@ export async function categorizeMerchantAction(
   }
 }
 
+export async function bulkCategorizeMerchantsAction(
+  merchantKeys: string[],
+  categoryId: string
+): Promise<ActionResult<{ updatedCount: number }>> {
+  try {
+    const userId = await requireUserId();
+    let total = 0;
+    for (const key of merchantKeys) {
+      const result = await merchantCategoryRuleService.categorizeMerchant(userId, key, categoryId);
+      total += result.updatedCount;
+    }
+    return { data: { updatedCount: total } };
+  } catch (err) {
+    return { error: mapError(err) };
+  }
+}
+
 function mapError(err: unknown): string {
   if (err instanceof UnauthenticatedError) {
     return "não autenticado";

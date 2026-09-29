@@ -3,6 +3,9 @@ import { ConsolidatedBalanceCard } from "@/components/dashboard/consolidated-bal
 import { CategorySummary } from "@/components/dashboard/category-summary";
 import { BudgetProgress } from "@/components/dashboard/BudgetProgress";
 import { MonthSelector } from "@/components/dashboard/month-selector";
+import { PendingTransactionsCard } from "@/components/dashboard/pending-transactions-card";
+import { MonthlyComparisonChart } from "@/components/dashboard/monthly-comparison-chart";
+import { BalanceProjectionChart } from "@/components/dashboard/balance-projection-chart";
 
 export default async function DashboardPage({
   searchParams,
@@ -22,6 +25,9 @@ export default async function DashboardPage({
     summaryByCategory: [],
     categories: [],
     budgetProgress: [],
+    pendingTransactions: [],
+    monthlyComparison: [],
+    balanceProjection: [],
   };
 
   return (
@@ -35,7 +41,10 @@ export default async function DashboardPage({
         </div>
         <MonthSelector currentMonth={data.month} currentYear={data.year} />
       </div>
+      <PendingTransactionsCard items={data.pendingTransactions as never} />
       <ConsolidatedBalanceCard balanceCents={data.consolidatedBalance} availableBalanceCents={data.availableBalance} />
+      {/* <MonthlyComparisonChart data={data.monthlyComparison as never} /> */}
+      <BalanceProjectionChart data={data.balanceProjection as never} />
       <CategorySummary
         summary={data.summaryByCategory as never}
         categories={data.categories as never}

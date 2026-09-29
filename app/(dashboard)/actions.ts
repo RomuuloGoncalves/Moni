@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth/options";
 import { dashboardService } from "@/services/dashboard.service";
 import { categoryService } from "@/services/category.service";
 import { budgetService } from "@/services/budget.service";
+import { recurringTransactionService } from "@/services/recurring-transaction.service";
 import { toPlainObject } from "@/lib/serialize";
 
 interface ActionResult<T> {
@@ -40,6 +41,9 @@ export interface DashboardData {
   }[];
   categories: unknown[];
   budgetProgress: unknown[];
+  pendingTransactions: unknown[];
+  monthlyComparison: unknown[];
+  balanceProjection: unknown[];
 }
 
 export async function getDashboardDataAction(params?: { month?: number; year?: number }): Promise<ActionResult<DashboardData>> {
@@ -49,13 +53,23 @@ export async function getDashboardDataAction(params?: { month?: number; year?: n
     const month = params?.month ?? (now.getUTCMonth() + 1);
     const year = params?.year ?? now.getUTCFullYear();
 
-    const [balanceResult, summaryByCategory, categories, budgetProgress] =
+    const [balanceResult, summaryByCategory, categories, budgetProgress, pendingTransactions, monthlyComparison, recurringItems] =
       await Promise.all([
         dashboardService.getConsolidatedBalance(userId),
         dashboardService.getMonthlySummaryByCategory(userId, month, year),
         categoryService.listCategories(userId),
         budgetService.getMonthlyBudgetProgress(userId, month, year),
+        dashboardService.getPendingTransactions(userId),
+        dashboardService.getMonthlyComparison(userId, 6),
+        recurringTransactionService.list(userId),
       ]);
+
+    const activeRecurring = (recurringItems as { isActive: boolean; type: string; amountCents: number; nextDueDate: Date; frequency: string }[])
+      .filter((r) => r.isActive);
+
+    const balanceProjection = activeRecurring.length > 0
+      ? await dashboardService.getBalanceProjection(userId, balanceResult.total, activeRecurring)
+      : [];
 
     return {
       data: toPlainObject({
@@ -66,6 +80,9 @@ export async function getDashboardDataAction(params?: { month?: number; year?: n
         summaryByCategory,
         categories,
         budgetProgress,
+        pendingTransactions,
+        monthlyComparison,
+        balanceProjection,
       }),
     };
   } catch (err) {

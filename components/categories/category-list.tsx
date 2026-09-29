@@ -360,6 +360,7 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
   const [error, setError] = useState<string | undefined>();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<CategoryItem | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -376,11 +377,8 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
     });
   }
 
-  function handleDelete(id: string, categoryName: string) {
+  function handleDelete(id: string) {
     setError(undefined);
-    if (!confirm(`Excluir a categoria "${categoryName}"?`)) {
-      return;
-    }
     startTransition(async () => {
       const result = await deleteCategoryAction(id);
       if (result.error) {
@@ -388,6 +386,7 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
         return;
       }
       setCategories((prev) => prev.filter((c) => c._id !== id));
+      setDeleteTarget(null);
     });
   }
 
@@ -495,6 +494,34 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
         </Dialog>
       </div>
 
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="flex w-full max-w-sm flex-col gap-4 rounded-xl border bg-card p-5 shadow-xl">
+            <div>
+              <p className="font-semibold">Excluir categoria</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Tem certeza que deseja excluir <strong>{deleteTarget.name}</strong>? As transações vinculadas perderão a categoria.
+              </p>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => { setDeleteTarget(null); setError(undefined); }}>
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={isPending}
+                onClick={() => handleDelete(deleteTarget._id)}
+              >
+                <Trash2 className="size-3.5 mr-1.5" />
+                {isPending ? "Excluindo…" : "Excluir"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3">
         {categories.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhuma categoria cadastrada ainda.</p>
@@ -515,7 +542,7 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
                   <EditCategoryDialog category={category} onSave={handleUpdate} />
                   <button
                     type="button"
-                    onClick={() => handleDelete(category._id, category.name)}
+                    onClick={() => setDeleteTarget(category)}
                     className="flex shrink-0 items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-destructive"
                     aria-label={`Excluir ${category.name}`}
                   >

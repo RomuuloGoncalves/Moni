@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useHideValues } from "@/lib/hooks/use-hide-values";
 import {
   ArrowLeftRight,
   LayoutGrid,
@@ -13,6 +14,10 @@ import {
   Store,
   MoreHorizontal,
   LogOut,
+  Eye,
+  EyeOff,
+  RepeatIcon,
+  Target,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Logo } from "@/components/brand/logo";
@@ -35,6 +40,8 @@ const primaryNav = [
 
 const moreNav = [
   { href: "/budgets", label: "Orçamento", icon: PiggyBank },
+  { href: "/recurring", label: "Recorrentes", icon: RepeatIcon },
+  { href: "/goals", label: "Metas", icon: Target },
   { href: "/import", label: "Importar extrato", icon: Upload },
   { href: "/merchants", label: "Comerciantes", icon: Store },
 ];
@@ -49,6 +56,7 @@ export function Header() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreActive = moreNav.some((item) => isActive(pathname, item.href));
+  const { hidden, toggle } = useHideValues();
 
   return (
     <>
@@ -81,12 +89,26 @@ export function Header() {
               );
             })}
             <button
+              onClick={toggle}
+              aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
+              className="ml-auto rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+            >
+              {hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+            <button
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="ml-2 rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-ring"
+              className="rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-2 focus-visible:outline-ring"
             >
               Sair
             </button>
           </nav>
+          <button
+            onClick={toggle}
+            aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
+            className="ml-auto rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring md:hidden"
+          >
+            {hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
         </div>
       </header>
 

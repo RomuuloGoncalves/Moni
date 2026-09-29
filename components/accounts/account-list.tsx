@@ -18,8 +18,9 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { InvestmentWarningBadge } from "@/components/accounts/investment-warning-badge";
+import { useHideValues } from "@/lib/hooks/use-hide-values";
 
 const ACCOUNT_TYPES = ["CHECKING", "CREDIT", "SAVINGS", "CASH", "INVESTMENT"] as const;
 type AccountType = (typeof ACCOUNT_TYPES)[number];
@@ -40,6 +41,7 @@ function formatCents(cents: number) {
 
 export function AccountList({ initialAccounts }: { initialAccounts: AccountItem[] }) {
   const [accounts, setAccounts] = useState(initialAccounts);
+  const { hidden } = useHideValues();
   const [name, setName] = useState("");
   const [type, setType] = useState<AccountType>("CHECKING");
   const [balance, setBalance] = useState("0");
@@ -47,6 +49,7 @@ export function AccountList({ initialAccounts }: { initialAccounts: AccountItem[
   const [error, setError] = useState<string | undefined>();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AccountItem | null>(null);
 
   function resetForm() {
     setName("");
@@ -191,6 +194,38 @@ export function AccountList({ initialAccounts }: { initialAccounts: AccountItem[
         </Dialog>
       </div>
 
+      {/* Delete confirmation dialog */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="flex w-full max-w-sm flex-col gap-4 rounded-xl border bg-card p-5 shadow-xl">
+            <div>
+              <p className="font-semibold">Excluir conta</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Tem certeza que deseja excluir <strong>{deleteTarget.name}</strong>? Esta ação não pode ser desfeita.
+              </p>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => { setDeleteTarget(null); setError(undefined); }}>
+                Cancelar
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={isPending}
+                onClick={() => {
+                  handleDelete(deleteTarget._id);
+                  setDeleteTarget(null);
+                }}
+              >
+                <Trash2 className="size-3.5 mr-1.5" />
+                {isPending ? "Excluindo…" : "Excluir"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3">
         {accounts.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhuma conta cadastrada ainda.</p>
@@ -209,7 +244,7 @@ export function AccountList({ initialAccounts }: { initialAccounts: AccountItem[
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end sm:gap-4">
                   <p className="text-lg font-semibold tabular-nums">
-                    {formatCents(account.balance)}
+                    {hidden ? "••••" : formatCents(account.balance)}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleEdit(account)}>
@@ -218,11 +253,7 @@ export function AccountList({ initialAccounts }: { initialAccounts: AccountItem[
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        if (confirm(`Excluir a conta "${account.name}"?`)) {
-                          handleDelete(account._id);
-                        }
-                      }}
+                      onClick={() => setDeleteTarget(account)}
                     >
                       Excluir
                     </Button>
