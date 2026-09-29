@@ -149,9 +149,17 @@ function TypeIcon({ type }: { type: TransactionType }) {
 
 // ─── tags editor ─────────────────────────────────────────────────────────────
 
-function TagsEditor({ transactionId, initialTags, onSave }: {
+// Derives all unique tags used across a transaction list
+function allTags(transactions: TransactionItem[]): string[] {
+  const set = new Set<string>();
+  for (const t of transactions) for (const tag of t.tags ?? []) set.add(tag);
+  return [...set].sort();
+}
+
+function TagsEditor({ transactionId, initialTags, allExisting, onSave }: {
   transactionId: string;
   initialTags: string[];
+  allExisting: string[]; // tags already used in the list → shown as suggestions
   onSave: (tags: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -159,17 +167,18 @@ function TagsEditor({ transactionId, initialTags, onSave }: {
   const [input, setInput] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  function addTag() {
-    const tag = input.trim().toLowerCase();
-    if (tag && !tags.includes(tag)) setTags((p) => [...p, tag]);
-    setInput("");
+  function toggle(tag: string) {
+    setTags((p) => p.includes(tag) ? p.filter((t) => t !== tag) : [...p, tag]);
   }
 
-  function removeTag(tag: string) { setTags((p) => p.filter((t) => t !== tag)); }
-
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); }
-    if (e.key === "Backspace" && !input && tags.length) setTags((p) => p.slice(0, -1));
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      const tag = input.trim().toLowerCase();
+      if (tag && !tags.includes(tag)) setTags((p) => [...p, tag]);
+      setInput("");
+    }
+    if (e.key === "Escape") setOpen(false);
   }
 
   function handleSave() {
@@ -180,6 +189,8 @@ function TagsEditor({ transactionId, initialTags, onSave }: {
     });
   }
 
+  const suggestions = allExisting.filter((t) => !tags.includes(t) && t.includes(input.toLowerCase()));
+
   if (!open) {
     return (
       <div className="flex flex-wrap items-center gap-1 mt-1">
@@ -189,7 +200,7 @@ function TagsEditor({ transactionId, initialTags, onSave }: {
           </span>
         ))}
         <button
-          onClick={() => { setTags(initialTags); setOpen(true); }}
+          onClick={() => { setTags(initialTags); setInput(""); setOpen(true); }}
           className="flex items-center gap-0.5 rounded-full border border-dashed px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-primary hover:text-primary"
         >
           <TagIcon className="size-2.5" />
@@ -200,29 +211,59 @@ function TagsEditor({ transactionId, initialTags, onSave }: {
   }
 
   return (
-    <div className="mt-1 flex flex-col gap-1.5">
-      <div className="flex flex-wrap items-center gap-1 rounded-md border bg-background px-2 py-1">
+    <div className="mt-1.5 flex flex-col gap-1.5 rounded-lg border bg-card p-2.5 shadow-sm">
+      {/* Tags currently selected */}
+      <div className="flex flex-wrap gap-1">
         {tags.map((t) => (
-          <span key={t} className="flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-            {t}
-            <button onClick={() => removeTag(t)} className="hover:text-destructive"><X className="size-2.5" /></button>
-          </span>
+          <button
+            key={t}
+            onClick={() => toggle(t)}
+            className="flex items-center gap-0.5 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary hover:bg-destructive/15 hover:text-destructive"
+          >
+            {t} <X className="size-2.5" />
+          </button>
         ))}
-        <input
-          autoFocus
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={addTag}
-          placeholder="Nova tag…"
-          className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
-        />
+        {tags.length === 0 && <span className="text-[10px] text-muted-foreground">Nenhuma tag</span>}
       </div>
+
+      {/* Existing tags as one-click suggestions */}
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          <span className="text-[10px] text-muted-foreground mr-0.5">Usar:</span>
+          {suggestions.map((t) => (
+            <button
+              key={t}
+              onClick={() => toggle(t)}
+              className="rounded-full border border-dashed px-2 py-0.5 text-[10px] text-muted-foreground hover:border-primary hover:text-primary"
+            >
+              + {t}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Input for new tags */}
+      <input
+        autoFocus
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Nova tag (Enter para adicionar)…"
+        className="rounded-md border bg-background px-2 py-1 text-xs outline-none focus:border-primary"
+      />
+
       <div className="flex gap-1.5">
-        <button onClick={handleSave} disabled={isPending} className="rounded px-2 py-0.5 text-[10px] bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+        <button
+          onClick={handleSave}
+          disabled={isPending}
+          className="rounded px-2.5 py-1 text-[11px] bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
           {isPending ? "…" : "Salvar"}
         </button>
-        <button onClick={() => setOpen(false)} className="rounded px-2 py-0.5 text-[10px] border hover:bg-accent">
+        <button
+          onClick={() => setOpen(false)}
+          className="rounded px-2.5 py-1 text-[11px] border hover:bg-accent"
+        >
           Cancelar
         </button>
       </div>
@@ -497,11 +538,28 @@ export function TransactionList({
     INCOME: "Receita", EXPENSE: "Despesa", TRANSFER: "Transferência",
   };
 
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+
+  const existingTags = useMemo(() => allTags(transactions), [transactions]);
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return transactions;
-    const q = search.trim().toLowerCase();
-    return transactions.filter((t) => t.description.toLowerCase().includes(q));
-  }, [transactions, search]);
+    let result = transactions;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter((t) => t.description.toLowerCase().includes(q));
+    }
+    if (tagFilter) {
+      result = result.filter((t) => t.tags?.includes(tagFilter));
+    }
+    return result;
+  }, [transactions, search, tagFilter]);
+
+  const tagFilterTotal = useMemo(() => {
+    if (!tagFilter) return null;
+    const income  = filtered.filter((t) => t.type === "INCOME").reduce((s, t) => s + t.amount, 0);
+    const expense = filtered.filter((t) => t.type === "EXPENSE").reduce((s, t) => s + t.amount, 0);
+    return { income, expense };
+  }, [filtered, tagFilter]);
 
   function resetForm() { setAmount(""); setDescription(""); }
 
@@ -739,6 +797,50 @@ export function TransactionList({
         )}
       </div>
 
+      {/* tag filter bar */}
+      {existingTags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          <TagIcon className="size-3.5 shrink-0 text-muted-foreground" />
+          {existingTags.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setTagFilter((prev) => prev === tag ? null : tag)}
+              className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors ${
+                tagFilter === tag
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-primary/10 text-primary hover:bg-primary/20"
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+          {tagFilter && (
+            <button
+              onClick={() => setTagFilter(null)}
+              className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3" /> limpar
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* tag filter subtotal */}
+      {tagFilter && tagFilterTotal && (
+        <div className="flex items-center gap-4 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+          <span className="font-medium text-primary">#{tagFilter}</span>
+          {tagFilterTotal.income > 0 && (
+            <span className="text-income">+{formatCurrency(tagFilterTotal.income)}</span>
+          )}
+          {tagFilterTotal.expense > 0 && (
+            <span className="text-expense">−{formatCurrency(tagFilterTotal.expense)}</span>
+          )}
+          <span className="ml-auto text-xs text-muted-foreground">
+            {filtered.length} transaç{filtered.length !== 1 ? "ões" : "ão"}
+          </span>
+        </div>
+      )}
+
       {/* list */}
       <div className="flex flex-col gap-2">
         {filtered.length === 0 ? (
@@ -771,6 +873,7 @@ export function TransactionList({
                     <TagsEditor
                       transactionId={t._id}
                       initialTags={t.tags ?? []}
+                      allExisting={existingTags}
                       onSave={(tags) => setTransactions((prev) => prev.map((tx) => tx._id === t._id ? { ...tx, tags } : tx))}
                     />
                   </div>

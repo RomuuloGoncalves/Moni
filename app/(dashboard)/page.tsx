@@ -50,15 +50,13 @@ export default async function DashboardPage({
       <PendingTransactionsCard items={data.pendingTransactions as never} />
       <SpendableTodayCard spendableCents={data.spendableToday} month={data.month} year={data.year} />
       <ConsolidatedBalanceCard balanceCents={data.consolidatedBalance} availableBalanceCents={data.availableBalance} />
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <ExpenseHeatmap dailyExpenses={data.dailyExpenses as never} month={data.month} year={data.year} />
-        <HealthScoreCard
-          score={(data.healthScore as never as { score: number }).score}
-          savingsRate={(data.healthScore as never as { savingsRate: number }).savingsRate}
-          goalsActive={(data.healthScore as never as { goalsActive: number }).goalsActive}
-          hasOverdue={(data.healthScore as never as { hasOverdue: boolean }).hasOverdue}
-        />
-      </div>
+      <ExpenseHeatmap dailyExpenses={data.dailyExpenses as never} month={data.month} year={data.year} />
+      {/* <HealthScoreCard
+        score={(data.healthScore as never as { score: number }).score}
+        savingsRate={(data.healthScore as never as { savingsRate: number }).savingsRate}
+        goalsActive={(data.healthScore as never as { goalsActive: number }).goalsActive}
+        hasOverdue={(data.healthScore as never as { hasOverdue: boolean }).hasOverdue}
+      /> */}
       {/* <MonthlyComparisonChart data={data.monthlyComparison as never} /> */}
       <BalanceProjectionChart data={data.balanceProjection as never} />
       <CategorySummary
