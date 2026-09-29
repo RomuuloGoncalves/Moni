@@ -13,6 +13,7 @@ const transactionSchema = new Schema({
   date: { type: Date, required: true },
   description: { type: String, required: true, maxlength: 200 },
   isPaid: { type: Boolean, required: true, default: false },
+  tags: { type: [String], default: [] },
   createdAt: { type: Date, default: () => new Date() },
 });
 

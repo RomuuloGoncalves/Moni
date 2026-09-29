@@ -389,6 +389,12 @@ export const transactionService = {
     }
     return found;
   },
+
+  async updateTags(userId: string, id: string, tags: string[]) {
+    const clean = tags.map((t) => t.trim().toLowerCase()).filter(Boolean);
+    const unique = [...new Set(clean)];
+    return transactionRepository.updateTags(userId, id, unique);
+  },
 };
 
 export default transactionService;

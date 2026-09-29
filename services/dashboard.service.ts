@@ -142,6 +142,110 @@ export const dashboardService = {
   },
 
   /**
+   * Returns daily expense totals for the current month — used for the heatmap.
+   */
+  async getDailyExpenses(userId: string, month: number, year: number): Promise<Record<string, number>> {
+    await connectDB();
+    const { from, to } = monthRange(month, year);
+    const agg = await Transaction.aggregate([
+      {
+        $match: {
+          userId: new (await import("mongoose")).default.Types.ObjectId(userId),
+          type: "EXPENSE",
+          isPaid: true,
+          date: { $gte: from, $lte: to },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date", timezone: "UTC" } },
+          total: { $sum: "$amount" },
+        },
+      },
+    ]);
+    return Object.fromEntries(agg.map((r) => [r._id as string, r.total as number]));
+  },
+
+  /**
+   * Calculates "how much can I spend today": available balance divided by
+   * remaining days in the month, minus pending recurring expenses.
+   */
+  async getSpendableToday(
+    userId: string,
+    availableBalance: number,
+    pendingRecurringCents: number
+  ): Promise<number> {
+    const now = new Date();
+    const lastDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
+    const remainingDays = lastDay.getUTCDate() - now.getUTCDate() + 1;
+    if (remainingDays <= 0) return 0;
+    const spendable = (availableBalance - pendingRecurringCents) / remainingDays;
+    return Math.max(0, Math.round(spendable));
+  },
+
+  /**
+   * Calculates a 0–100 financial health score.
+   * Components: savings rate (40pts), budgets on track (30pts), goals in progress (20pts), no overdue (10pts).
+   */
+  async getHealthScore(userId: string, month: number, year: number): Promise<{
+    score: number;
+    savingsRate: number;
+    budgetsOk: number;
+    goalsActive: number;
+    hasOverdue: boolean;
+  }> {
+    await connectDB();
+    const { from, to } = monthRange(month, year);
+
+    const agg = await Transaction.aggregate([
+      {
+        $match: {
+          userId: new (await import("mongoose")).default.Types.ObjectId(userId),
+          isPaid: true,
+          type: { $in: ["INCOME", "EXPENSE"] },
+          date: { $gte: from, $lte: to },
+        },
+      },
+      { $group: { _id: "$type", total: { $sum: "$amount" } } },
+    ]);
+
+    const income = agg.find((r) => r._id === "INCOME")?.total ?? 0;
+    const expense = agg.find((r) => r._id === "EXPENSE")?.total ?? 0;
+    const savingsRate = income > 0 ? Math.max(0, (income - expense) / income) : 0;
+    const savingsScore = Math.min(40, Math.round(savingsRate * 100)); // 40% weight
+
+    // Check overdue
+    const now = new Date();
+    const overdueCount = await Transaction.countDocuments({
+      userId: new (await import("mongoose")).default.Types.ObjectId(userId),
+      isPaid: false,
+      type: { $in: ["INCOME", "EXPENSE"] },
+      date: { $lt: now },
+    });
+    const overdueScore = overdueCount === 0 ? 10 : 0;
+
+    // Goals: any active = partial credit
+    const { SavingsGoal } = await import("@/models/SavingsGoal");
+    const goals = await SavingsGoal.find({ userId }).lean();
+    const activeGoals = goals.filter((g) => g.currentCents < g.targetCents).length;
+    const completedGoals = goals.filter((g) => g.currentCents >= g.targetCents).length;
+    const goalsScore = goals.length === 0 ? 10 : Math.min(20, completedGoals * 10 + (activeGoals > 0 ? 5 : 0));
+
+    // Budgets: placeholder 20pts (full budget integration would require budget progress)
+    const budgetsScore = 20;
+
+    const score = Math.min(100, savingsScore + goalsScore + budgetsScore + overdueScore);
+
+    return {
+      score,
+      savingsRate: Math.round(savingsRate * 100),
+      budgetsOk: budgetsScore,
+      goalsActive: activeGoals,
+      hasOverdue: overdueCount > 0,
+    };
+  },
+
+  /**
    * Returns projected daily balance for the next `days` days based on
    * active recurring transactions.
    */

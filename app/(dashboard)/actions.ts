@@ -44,6 +44,9 @@ export interface DashboardData {
   pendingTransactions: unknown[];
   monthlyComparison: unknown[];
   balanceProjection: unknown[];
+  dailyExpenses: Record<string, number>;
+  spendableToday: number;
+  healthScore: { score: number; savingsRate: number; goalsActive: number; hasOverdue: boolean };
 }
 
 export async function getDashboardDataAction(params?: { month?: number; year?: number }): Promise<ActionResult<DashboardData>> {
@@ -53,7 +56,7 @@ export async function getDashboardDataAction(params?: { month?: number; year?: n
     const month = params?.month ?? (now.getUTCMonth() + 1);
     const year = params?.year ?? now.getUTCFullYear();
 
-    const [balanceResult, summaryByCategory, categories, budgetProgress, pendingTransactions, monthlyComparison, recurringItems] =
+    const [balanceResult, summaryByCategory, categories, budgetProgress, pendingTransactions, monthlyComparison, recurringItems, dailyExpenses, healthScore] =
       await Promise.all([
         dashboardService.getConsolidatedBalance(userId),
         dashboardService.getMonthlySummaryByCategory(userId, month, year),
@@ -62,14 +65,23 @@ export async function getDashboardDataAction(params?: { month?: number; year?: n
         dashboardService.getPendingTransactions(userId),
         dashboardService.getMonthlyComparison(userId, 6),
         recurringTransactionService.list(userId),
+        dashboardService.getDailyExpenses(userId, month, year),
+        dashboardService.getHealthScore(userId, month, year),
       ]);
 
     const activeRecurring = (recurringItems as { isActive: boolean; type: string; amountCents: number; nextDueDate: Date; frequency: string }[])
       .filter((r) => r.isActive);
 
-    const balanceProjection = activeRecurring.length > 0
-      ? await dashboardService.getBalanceProjection(userId, balanceResult.total, activeRecurring)
-      : [];
+    const pendingRecurringCents = activeRecurring
+      .filter((r) => r.type === "EXPENSE")
+      .reduce((s, r) => s + r.amountCents, 0);
+
+    const [balanceProjection, spendableToday] = await Promise.all([
+      activeRecurring.length > 0
+        ? dashboardService.getBalanceProjection(userId, balanceResult.total, activeRecurring)
+        : Promise.resolve([]),
+      dashboardService.getSpendableToday(userId, balanceResult.available, pendingRecurringCents),
+    ]);
 
     return {
       data: toPlainObject({
@@ -83,6 +95,9 @@ export async function getDashboardDataAction(params?: { month?: number; year?: n
         pendingTransactions,
         monthlyComparison,
         balanceProjection,
+        dailyExpenses,
+        spendableToday,
+        healthScore,
       }),
     };
   } catch (err) {

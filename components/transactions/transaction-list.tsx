@@ -8,6 +8,7 @@ import {
   setPaidAction,
   suggestCategoryAction,
   listTransactionsAction,
+  updateTagsAction,
 } from "@/app/(dashboard)/transactions/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,8 @@ import {
   Search,
   Pencil,
   Download,
+  TagIcon,
+  X,
   Utensils, Coffee, ShoppingBag, ShoppingCart, Car, Bus, Train, Plane, Fuel,
   Home, Building2, Wrench, Lightbulb, Droplet, Wifi, Phone, Tv, Music, Film,
   Gamepad2, Dumbbell, HeartPulse, Pill, Stethoscope, Baby, Dog, Cat, Shirt,
@@ -89,6 +92,7 @@ interface TransactionItem {
   date: string;
   description: string;
   isPaid: boolean;
+  tags?: string[];
 }
 
 interface AccountOption { _id: string; name: string }
@@ -141,6 +145,89 @@ function TypeIcon({ type }: { type: TransactionType }) {
   if (type === "INCOME")   return <ArrowUpCircle   className="h-4 w-4 shrink-0 text-income" aria-label="Receita" />;
   if (type === "EXPENSE")  return <ArrowDownCircle className="h-4 w-4 shrink-0 text-expense" aria-label="Despesa" />;
   return <ArrowLeftRight className="h-4 w-4 shrink-0 text-blue-500" aria-label="Transferência" />;
+}
+
+// ─── tags editor ─────────────────────────────────────────────────────────────
+
+function TagsEditor({ transactionId, initialTags, onSave }: {
+  transactionId: string;
+  initialTags: string[];
+  onSave: (tags: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [tags, setTags] = useState<string[]>(initialTags);
+  const [input, setInput] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  function addTag() {
+    const tag = input.trim().toLowerCase();
+    if (tag && !tags.includes(tag)) setTags((p) => [...p, tag]);
+    setInput("");
+  }
+
+  function removeTag(tag: string) { setTags((p) => p.filter((t) => t !== tag)); }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(); }
+    if (e.key === "Backspace" && !input && tags.length) setTags((p) => p.slice(0, -1));
+  }
+
+  function handleSave() {
+    startTransition(async () => {
+      await updateTagsAction(transactionId, tags);
+      onSave(tags);
+      setOpen(false);
+    });
+  }
+
+  if (!open) {
+    return (
+      <div className="flex flex-wrap items-center gap-1 mt-1">
+        {initialTags.map((t) => (
+          <span key={t} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+            {t}
+          </span>
+        ))}
+        <button
+          onClick={() => { setTags(initialTags); setOpen(true); }}
+          className="flex items-center gap-0.5 rounded-full border border-dashed px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-primary hover:text-primary"
+        >
+          <TagIcon className="size-2.5" />
+          {initialTags.length === 0 ? "tag" : "+"}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 flex flex-col gap-1.5">
+      <div className="flex flex-wrap items-center gap-1 rounded-md border bg-background px-2 py-1">
+        {tags.map((t) => (
+          <span key={t} className="flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+            {t}
+            <button onClick={() => removeTag(t)} className="hover:text-destructive"><X className="size-2.5" /></button>
+          </span>
+        ))}
+        <input
+          autoFocus
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={addTag}
+          placeholder="Nova tag…"
+          className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+        />
+      </div>
+      <div className="flex gap-1.5">
+        <button onClick={handleSave} disabled={isPending} className="rounded px-2 py-0.5 text-[10px] bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+          {isPending ? "…" : "Salvar"}
+        </button>
+        <button onClick={() => setOpen(false)} className="rounded px-2 py-0.5 text-[10px] border hover:bg-accent">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ─── delete confirmation dialog ──────────────────────────────────────────────
@@ -681,6 +768,11 @@ export function TransactionList({
                       {t.toAccountId ? ` → ${accountNameById.get(t.toAccountId) ?? "?"}` : ""}
                       {cat ? ` · ${cat.name}` : ""}
                     </p>
+                    <TagsEditor
+                      transactionId={t._id}
+                      initialTags={t.tags ?? []}
+                      onSave={(tags) => setTransactions((prev) => prev.map((tx) => tx._id === t._id ? { ...tx, tags } : tx))}
+                    />
                   </div>
                 </div>
                 <div className="ml-auto flex items-center gap-2">

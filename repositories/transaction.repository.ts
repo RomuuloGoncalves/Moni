@@ -89,6 +89,15 @@ export const transactionRepository = {
     return doc;
   },
 
+  async updateTags(userId: string, id: string, tags: string[]) {
+    await connectDB();
+    return Transaction.findOneAndUpdate(
+      { _id: id, userId },
+      { $set: { tags } },
+      { returnDocument: "after" }
+    ).lean();
+  },
+
   async delete(userId: string, id: string, session?: ClientSession) {
     await connectDB();
     const res = await Transaction.deleteOne({ _id: id, userId }, { session });

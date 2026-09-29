@@ -4,8 +4,8 @@
   "description": "Suas contas, categorias e transações num só lugar.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#09090b",
+  "background_color": "#0E5C4F",
+  "theme_color": "#0E5C4F",
   "orientation": "portrait-primary",
   "icons": [
     {

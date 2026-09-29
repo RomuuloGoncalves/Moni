@@ -6,6 +6,9 @@ import { MonthSelector } from "@/components/dashboard/month-selector";
 import { PendingTransactionsCard } from "@/components/dashboard/pending-transactions-card";
 import { MonthlyComparisonChart } from "@/components/dashboard/monthly-comparison-chart";
 import { BalanceProjectionChart } from "@/components/dashboard/balance-projection-chart";
+import { ExpenseHeatmap } from "@/components/dashboard/expense-heatmap";
+import { SpendableTodayCard } from "@/components/dashboard/spendable-today-card";
+import { HealthScoreCard } from "@/components/dashboard/health-score-card";
 
 export default async function DashboardPage({
   searchParams,
@@ -28,6 +31,9 @@ export default async function DashboardPage({
     pendingTransactions: [],
     monthlyComparison: [],
     balanceProjection: [],
+    dailyExpenses: {},
+    spendableToday: 0,
+    healthScore: { score: 0, savingsRate: 0, goalsActive: 0, hasOverdue: false },
   };
 
   return (
@@ -42,7 +48,17 @@ export default async function DashboardPage({
         <MonthSelector currentMonth={data.month} currentYear={data.year} />
       </div>
       <PendingTransactionsCard items={data.pendingTransactions as never} />
+      <SpendableTodayCard spendableCents={data.spendableToday} month={data.month} year={data.year} />
       <ConsolidatedBalanceCard balanceCents={data.consolidatedBalance} availableBalanceCents={data.availableBalance} />
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <ExpenseHeatmap dailyExpenses={data.dailyExpenses as never} month={data.month} year={data.year} />
+        <HealthScoreCard
+          score={(data.healthScore as never as { score: number }).score}
+          savingsRate={(data.healthScore as never as { savingsRate: number }).savingsRate}
+          goalsActive={(data.healthScore as never as { goalsActive: number }).goalsActive}
+          hasOverdue={(data.healthScore as never as { hasOverdue: boolean }).hasOverdue}
+        />
+      </div>
       {/* <MonthlyComparisonChart data={data.monthlyComparison as never} /> */}
       <BalanceProjectionChart data={data.balanceProjection as never} />
       <CategorySummary

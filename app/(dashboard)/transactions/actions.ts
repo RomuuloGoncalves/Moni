@@ -136,6 +136,19 @@ export async function suggestCategoryAction(
   }
 }
 
+export async function updateTagsAction(
+  id: string,
+  tags: string[]
+): Promise<ActionResult<void>> {
+  try {
+    const userId = await requireUserId();
+    await transactionService.updateTags(userId, id, tags);
+    return {};
+  } catch (err) {
+    return { error: mapError(err) };
+  }
+}
+
 function mapError(err: unknown): string {
   if (err instanceof UnauthenticatedError) {
     return "não autenticado";
