@@ -2,7 +2,7 @@ import { connectDB } from "@/lib/db/connect";
 import { MerchantCategoryRule } from "@/models/MerchantCategoryRule";
 import { Category } from "@/models/Category";
 import { Transaction } from "@/models/Transaction";
-import { normalizeDescription } from "@/lib/import/normalize";
+import { normalizeMerchantKey } from "@/lib/import/normalize";
 
 export interface UncategorizedMerchant {
   merchantKey: string;
@@ -62,7 +62,7 @@ export const merchantCategoryRuleRepository = {
 
     const grouped = new Map<string, { sampleDescription: string; count: number }>();
     for (const tx of candidates) {
-      const merchantKey = normalizeDescription(tx.description);
+      const merchantKey = normalizeMerchantKey(tx.description);
       const existing = grouped.get(merchantKey);
       if (existing) {
         existing.count += 1;
@@ -101,7 +101,7 @@ export const merchantCategoryRuleRepository = {
       .select("description")
       .lean();
     const matchingIds = candidates
-      .filter((tx) => normalizeDescription(tx.description) === merchantKey)
+      .filter((tx) => normalizeMerchantKey(tx.description) === merchantKey)
       .map((tx) => tx._id);
 
     if (matchingIds.length === 0) {

@@ -96,16 +96,18 @@ export function TransactionList({
   initialTransactions,
   accounts,
   categories,
+  initialMonth = "",
 }: {
   initialTransactions: TransactionItem[];
   accounts: AccountOption[];
   categories: CategoryOption[];
+  initialMonth?: string;
 }) {
   const [transactions, setTransactions] = useState(initialTransactions);
   const [error, setError] = useState<string | undefined>();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-  const [monthFilter, setMonthFilter] = useState("");
+  const [monthFilter, setMonthFilter] = useState(initialMonth);
   const [isFiltering, startFilterTransition] = useTransition();
 
   const [type, setType] = useState<TransactionType>("EXPENSE");
