@@ -144,26 +144,33 @@ export const dashboardService = {
   /**
    * Returns daily expense totals for the current month — used for the heatmap.
    */
-  async getDailyExpenses(userId: string, month: number, year: number): Promise<Record<string, number>> {
+  async getDailyExpenses(
+    userId: string,
+    month: number,
+    year: number,
+  ): Promise<Record<string, { total: number; items: { description: string; amountCents: number }[] }>> {
     await connectDB();
     const { from, to } = monthRange(month, year);
-    const agg = await Transaction.aggregate([
-      {
-        $match: {
-          userId: new (await import("mongoose")).default.Types.ObjectId(userId),
-          type: "EXPENSE",
-          isPaid: true,
-          date: { $gte: from, $lte: to },
-        },
-      },
-      {
-        $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$date", timezone: "UTC" } },
-          total: { $sum: "$amount" },
-        },
-      },
-    ]);
-    return Object.fromEntries(agg.map((r) => [r._id as string, r.total as number]));
+    const mongoose = (await import("mongoose")).default;
+    const rows = await Transaction.find({
+      userId: new mongoose.Types.ObjectId(userId),
+      type: "EXPENSE",
+      isPaid: true,
+      date: { $gte: from, $lte: to },
+    })
+      .select("date amount description")
+      .lean();
+
+    const map: Record<string, { total: number; items: { description: string; amountCents: number }[] }> = {};
+    for (const r of rows) {
+      const key = new Date(r.date as Date).toISOString().slice(0, 10);
+      if (!map[key]) map[key] = { total: 0, items: [] };
+      map[key].total += r.amount as number;
+      map[key].items.push({ description: r.description as string, amountCents: r.amount as number });
+    }
+    // Sort items descending by amount
+    for (const v of Object.values(map)) v.items.sort((a, b) => b.amountCents - a.amountCents);
+    return map;
   },
 
   /**

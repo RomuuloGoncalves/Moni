@@ -44,7 +44,7 @@ export interface DashboardData {
   pendingTransactions: unknown[];
   monthlyComparison: unknown[];
   balanceProjection: unknown[];
-  dailyExpenses: Record<string, number>;
+  dailyExpenses: Record<string, { total: number; items: { description: string; amountCents: number }[] }>;
   spendableToday: number;
   healthScore: { score: number; savingsRate: number; goalsActive: number; hasOverdue: boolean };
 }

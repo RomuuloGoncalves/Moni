@@ -31,7 +31,7 @@ export default async function DashboardPage({
     pendingTransactions: [],
     monthlyComparison: [],
     balanceProjection: [],
-    dailyExpenses: {},
+    dailyExpenses: {} as Record<string, { total: number; items: { description: string; amountCents: number }[] }>,
     spendableToday: 0,
     healthScore: { score: 0, savingsRate: 0, goalsActive: 0, hasOverdue: false },
   };
